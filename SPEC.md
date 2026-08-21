@@ -1257,3 +1257,22 @@ contract.
 5. uploadfile in the copied patients package is a NotImplementedError
    stub; patient-intake's vendored implementation (1024 KB cap, file
    element with grouplist MISC) is the reference and replaces the stub.
+
+## Appendix D. Amendments ratified before build (2026-08-20)
+
+D-1 Tool naming. Policy tool_name values (e.g. amd_patients_get_demographic)
+    are canonical. Each Appendix A tool also registers its bare AMD action
+    (e.g. getdemographic) as an alias; token allowlists and POST /v1/tools
+    accept either; GET /v1/tools lists aliases; MCP tools/list advertises
+    canonical names only, preserving 12.1 parity with amd-mcp.
+D-2 No vendored AMD client. amd-mcp's amd_client/client.py is not copied
+    (it opens sockets, violating 6.2). connector/client_shim.py provides an
+    AMDClient-shaped facade (call, get_patient_bundle, get_visits_for_date,
+    get_appointments_via_reminders) that builds XmlRequest objects and
+    awaits send(), so copied handler call sites are unchanged.
+    amd_mcp_common.rate_limit is likewise not copied; connector/clock.py is
+    the only clock.
+D-3 Appendix C defect 1 is fixed only where it blocks an Appendix A tool;
+    all other affected tools remain unverified per 9.2.
+D-4 "login (internal)" in Appendix A is not a registry tool; it is
+    session.login plus the /v1/login route.
