@@ -120,7 +120,7 @@ const verdictSchema = {
   },
 };
 
-export default async function ({ agent, parallel, phase, log, workflow }) {
+// script body (top-level; agent/parallel/phase/log/workflow are globals)
   const commits = [];
   const openItems = [];
   const record = (r) => {
@@ -775,4 +775,3 @@ SPEC 23.4 are NOT done and must be listed).`,
     complianceVerdict,
     openItems,
   };
-}
