@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/payments/gettxhistory",
+  "title": "AMD action: gettxhistory",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "payments",
+    "key": "gettxhistory",
+    "name": "gettxhistory",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List one patient's transaction history (charges + payments + write-offs) with by_provcode + by_void + by_paymentplan summaries. Use for \"is this patient on a payment plan?\" or \"are any charges voided?\". Raw dollar amounts are REDACTED \u2014 status flags and last-payment dates remain visible. No `sum_amount` is returned (aggregating redacted markers is meaningless).",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "filterhistory": {
+      "description": "AMD spec: set 0.",
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "from_date": {
+      "description": "Optional service-date lower bound (MM/DD/YYYY).",
+      "type": "string"
+    },
+    "getmemo": {
+      "description": "1 = include non-expired patient memos.",
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "groupbyvisit": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "page": {
+      "description": "1-based page index; AMD returns pagecount in response.",
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "patient_id": {
+      "description": "AMD patientid.",
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "description": "Optional provider profile filter; empty = all.",
+      "type": "string"
+    },
+    "sortbypayment": {
+      "description": "0=by service type; -1=by payment type (charges omitted from result).",
+      "type": "integer",
+      "enum": [
+        -1,
+        0
+      ],
+      "default": 0
+    },
+    "sortdescending": {
+      "description": "Sort by service date desc/asc.",
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 1
+    },
+    "to_date": {
+      "description": "Optional service-date upper bound (MM/DD/YYYY).",
+      "type": "string"
+    },
+    "typefilter": {
+      "description": "0=All, 1=Open, 2=Voided, 3=Unbilled. Voids excluded when 1 or 3.",
+      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "default": 1
+    }
+  }
+}

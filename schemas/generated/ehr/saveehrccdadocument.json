@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/saveehrccdadocument",
+  "title": "AMD action: saveehrccdadocument",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "saveehrccdadocument",
+    "name": "saveehrccdadocument",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "BETA EHR WRITE STUB: would save a CCDA ClinicalDocument XML blob. Handler does not parse; opaque body. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "clinical_document_xml"
+  ],
+  "properties": {
+    "clinical_document_xml": {
+      "description": "Opaque XML body (not parsed).",
+      "type": "string",
+      "minLength": 1
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

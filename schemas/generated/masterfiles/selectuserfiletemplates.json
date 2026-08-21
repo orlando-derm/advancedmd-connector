@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/selectuserfiletemplates",
+  "title": "AMD action: selectuserfiletemplates",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "masterfiles",
+    "key": "selectuserfiletemplates",
+    "name": "selectuserfiletemplates",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List the practice's user-defined file templates, optionally scoped to a template type. Returns count + templates. Master data, not PHI.",
+  "type": "object",
+  "properties": {
+    "template_type": {
+      "description": "Optional template-type filter.",
+      "type": "string"
+    }
+  }
+}

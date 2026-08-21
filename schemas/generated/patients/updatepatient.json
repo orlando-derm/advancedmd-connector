@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/updatepatient",
+  "title": "AMD action: updatepatient",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "patients",
+    "key": "updatepatient",
+    "name": "updatepatient",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would update an existing patient record (force=1 supported). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "updates"
+  ],
+  "properties": {
+    "force": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updates": {
+      "description": "Field updates.",
+      "type": "object"
+    }
+  }
+}

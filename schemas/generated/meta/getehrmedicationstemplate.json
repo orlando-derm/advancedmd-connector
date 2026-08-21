@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getehrmedicationstemplate",
+  "title": "AMD action: getehrmedicationstemplate",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getehrmedicationstemplate",
+    "name": "getehrmedicationstemplate",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrmedications schema template.",
+  "type": "object",
+  "properties": {}
+}

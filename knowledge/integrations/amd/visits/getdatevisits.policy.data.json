@@ -1,0 +1,27 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getdatevisits",
+  "domain": "visits",
+  "tier": 2,
+  "tool_name": "amd_visits_get_date_visits",
+  "redact": {
+    "phi_fields": ["first_name", "last_name", "dob", "patient_name", "name"],
+    "non_phi_keep": [
+      "patient_id", "chart_number",
+      "appointment_id", "visit_id", "appointment_type",
+      "provider_id", "provider_name", "scheduled_date",
+      "appointment_datetime", "visit_status", "duration",
+      "color", "apptstatus", "visitdate"
+    ],
+    "strict_mode_patterns": [".*_name$"]
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getdatevisits"]
+}

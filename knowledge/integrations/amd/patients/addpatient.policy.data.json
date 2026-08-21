@@ -1,0 +1,100 @@
+{
+  "$schema": "amd-mcp-policy/v1.1",
+  "action": "addpatient",
+  "domain": "patients",
+  "tier": 2,
+  "tool_name": "amd_patients_addpatient",
+  "redact": {
+    "phi_fields": [
+      "address2",
+      "phone_home",
+      "officephone",
+      "otherphone",
+      "address",
+      "refprovlastname",
+      "guarantor_dob",
+      "language",
+      "title",
+      "guarantor_firstname",
+      "city",
+      "date_of_birth",
+      "orientationother",
+      "homephone",
+      "orientation",
+      "zip",
+      "name",
+      "refprovmiddlename",
+      "genderidentityother",
+      "ssn",
+      "subscriber_number",
+      "social_security_number",
+      "middle_name",
+      "additional_mrn",
+      "genderidentity",
+      "employer",
+      "firstname",
+      "email",
+      "ByRefProvFirstName",
+      "subscribernum",
+      "sex",
+      "guarantor_lastname",
+      "last_name",
+      "patient_email",
+      "refprovfirstname",
+      "additionalmrn",
+      "phone_work",
+      "dob",
+      "lastname",
+      "phone_cell",
+      "address1",
+      "ByRefProvLastName",
+      "ByRefProvMiddleName",
+      "phone",
+      "maritalstatus",
+      "first_name",
+      "birthdate",
+      "middlename",
+      "postal_code"
+    ],
+    "non_phi_keep": [
+      "patient_id",
+      "patientid",
+      "chart_number",
+      "chart",
+      "carrier_code",
+      "carrier_name",
+      "carrier_id",
+      "carrierid",
+      "provider_id",
+      "providerid",
+      "provider_name",
+      "rendering_provider_id",
+      "referring_provider_id",
+      "appointment_id",
+      "appointment_type",
+      "plan_type",
+      "place_of_service",
+      "profile_id",
+      "profileid",
+      "facility_id",
+      "facilityid"
+    ],
+    "strict_mode_patterns": [
+      ".*_name$",
+      ".*_dob$"
+    ]
+  },
+  "permission": {
+    "audience": [
+      "admin"
+    ]
+  },
+  "audit": {
+    "always_log": true,
+    "log_when_phi_revealed": true
+  },
+  "write_action": true,
+  "permitted_actions": [
+    "addpatient"
+  ]
+}

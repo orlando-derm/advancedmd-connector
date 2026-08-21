@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/lookupfinclass",
+  "title": "AMD action: lookupfinclass",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "masterfiles",
+    "key": "lookupfinclass",
+    "name": "lookupfinclass",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search financial-class master records by query. Returns count + matches with finclass_id, finclass_code, name. Master data, not PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

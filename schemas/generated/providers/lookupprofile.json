@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/providers/lookupprofile",
+  "title": "AMD action: lookupprofile",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "providers",
+    "key": "lookupprofile",
+    "name": "lookupprofile",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search provider profile records (provider, facility, financial-class combinations) by query string. Returns query, count, matches, and narrow_query (true when results were held back because the query is too broad). matches rows: profile_id, name, code. Matches capped at 5. profile_id is what charge entry and visit creation expect.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

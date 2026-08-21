@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrccdadocument",
+  "title": "AMD action: getehrccdadocument",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrccdadocument",
+    "name": "getehrccdadocument",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-5, DUO-17): fetch the CCDA ClinicalDocument XML blob for a patient. Handler-level body replacement is MANDATORY: when ALLOW_PHI is false, ClinicalDocument string is replaced with '[REDACTED:CCDA]' before return.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

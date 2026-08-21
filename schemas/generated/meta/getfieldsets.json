@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getfieldsets",
+  "title": "AMD action: getfieldsets",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getfieldsets",
+    "name": "getfieldsets",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed from list_tools): returns the AMD field-set metadata. Used by tests and tooling, never invoked by Adam.",
+  "type": "object",
+  "properties": {}
+}

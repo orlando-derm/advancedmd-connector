@@ -1,0 +1,25 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "lookup-icd10",
+  "domain": "codes",
+  "tier": 3,
+  "tool_name": "amd_codes_lookup_icd10",
+  "redact": {
+    "phi_fields": [],
+    "non_phi_keep": [
+      "id", "code", "name", "description",
+      "codeset", "effective_date", "term_date",
+      "billable", "category", "_tag", "_attrs"
+    ],
+    "strict_mode_patterns": []
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": false
+  },
+  "write_action": false,
+  "permitted_actions": [["lookupdiagcode", {"class_": ["api"]}]]
+}

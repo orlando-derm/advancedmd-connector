@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/visits/getreminderrecallvisits",
+  "title": "AMD action: getreminderrecallvisits",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "visits",
+    "key": "getreminderrecallvisits",
+    "name": "getreminderrecallvisits",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List recall appointments (follow-up reminders due) for a date range. Returns start_date, end_date, max_recalls, count, by_remindertype, by_provider, by_provider_id, and a recalls list. recalls rows: recall_id, recall_date, remindertype, provider_id, provider_name, patient_id, patient_name, chart_number. remindertype labels the recall reason (annual skin check, biopsy follow-up, etc.) as configured in AMD.",
+  "type": "object",
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "properties": {
+    "end_date": {
+      "description": "Recalls on or before this date.",
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    },
+    "max_recalls": {
+      "description": "Cap on recall visits returned.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "start_date": {
+      "description": "Recalls on or after this date.",
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    }
+  }
+}

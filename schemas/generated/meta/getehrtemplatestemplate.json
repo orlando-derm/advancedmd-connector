@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getehrtemplatestemplate",
+  "title": "AMD action: getehrtemplatestemplate",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getehrtemplatestemplate",
+    "name": "getehrtemplatestemplate",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrs schema template.",
+  "type": "object",
+  "properties": {}
+}

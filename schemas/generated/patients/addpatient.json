@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/addpatient",
+  "title": "AMD action: addpatient",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "patients",
+    "key": "addpatient",
+    "name": "addpatient",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would create a new patient record with respparty + insplan + carrier links. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "first_name",
+    "last_name",
+    "dob",
+    "profile"
+  ],
+  "properties": {
+    "address": {
+      "description": "Optional address block.",
+      "type": "object"
+    },
+    "contactinfo": {
+      "description": "Optional contact-info block.",
+      "type": "object"
+    },
+    "dob": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    },
+    "first_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "last_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile": {
+      "description": "Provider profile.",
+      "type": "string",
+      "minLength": 1
+    },
+    "respparty_name": {
+      "description": "Responsible party label (e.g. SELF).",
+      "type": "string"
+    },
+    "sex": {
+      "type": "string",
+      "enum": [
+        "M",
+        "F",
+        "U"
+      ]
+    },
+    "ssn": {
+      "type": "string"
+    }
+  }
+}

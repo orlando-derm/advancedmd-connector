@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/lookupzipcode",
+  "title": "AMD action: lookupzipcode",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "masterfiles",
+    "key": "lookupzipcode",
+    "name": "lookupzipcode",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search the master zipcode table by code prefix or city. Returns count + matches with zip, city, state. Public reference data.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrccdadata",
+  "title": "AMD action: getehrccdadata",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrccdadata",
+    "name": "getehrccdadata",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-17): fetch CCDA structured-data payload for a patient. Strict redact across all named fields.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

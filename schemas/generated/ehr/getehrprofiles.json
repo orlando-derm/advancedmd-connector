@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrprofiles",
+  "title": "AMD action: getehrprofiles",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrprofiles",
+    "name": "getehrprofiles",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR: List EHR provider-profile records used by EHR notes and orders.",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string"
+    }
+  }
+}

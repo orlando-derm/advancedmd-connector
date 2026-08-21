@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/visits/getdatevisits",
+  "title": "AMD action: getdatevisits",
+  "x-amd-action": {
+    "domain": "visits",
+    "key": "getdatevisits",
+    "name": "getdatevisits",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List office visits scheduled on one specific date for this practice. Returns date, count, by_provider, by_provider_id, by_profile, by_facility, by_facility_id, by_apptstatus, and a visits list. visits rows: visit_id, starttime, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, profile_id, reason, patient_id, patient_name, chart_number. Several text fields (reason, profile, starttime, patient_name, chart_number) may be blank on this office key; empties are real.",
+  "type": "object",
+  "required": [
+    "date"
+  ],
+  "properties": {
+    "date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/providers/lookupprovider",
+  "title": "AMD action: lookupprovider",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "providers",
+    "key": "lookupprovider",
+    "name": "lookupprovider",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Resolve a provider's name (full or fragment) to a provider_id and specialty. Returns name, exact_match, page, count, by_specialty, and a providers list. providers rows: provider_id, name, code, npi, specialty. Set exact_match true to require a literal match; pass page to paginate long rosters. Pass the resolved provider_id to downstream tools rather than guessing.",
+  "type": "object",
+  "properties": {
+    "exact_match": {
+      "description": "If true, exact-name matching only.",
+      "type": "boolean",
+      "default": false
+    },
+    "name": {
+      "description": "Name fragment to search. Empty allowed for paged enumeration.",
+      "type": "string"
+    },
+    "page": {
+      "description": "1-based page index for paged results.",
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    }
+  }
+}

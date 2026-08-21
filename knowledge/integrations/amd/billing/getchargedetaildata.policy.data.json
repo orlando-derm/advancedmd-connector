@@ -1,0 +1,80 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getchargedetaildata",
+  "domain": "billing",
+  "tier": 2,
+  "tool_name": "amd_billing_get_charge_detail_data",
+  "redact": {
+    "phi_fields": [
+      "first_name", "last_name", "patient_name", "name",
+      "dob", "ssn",
+      "respparty", "resppartyname", "respparty_name",
+      "approvedby", "postedby", "createdby", "changedby",
+      "fee", "netfee", "allowed",
+      "paid",
+      "patportion", "insportion",
+      "patbal", "patbalance",
+      "insbal", "insbalance",
+      "totbal", "totalvisitcharge", "totalvisitcharges",
+      "patientportion",
+      "sumpatcharges", "suminscharges",
+      "sumpatpayments", "suminspayments",
+      "sumpatwriteoffs", "suminswriteoffs",
+      "diagcodes", "DiagnosisCodes", "DiagnosisCodesICD10", "modcodes",
+      "cobcode", "woamount", "woreason", "writeoff",
+      "writeoffamount", "writeoffreason",
+      "holdreasondesc", "holdreasoncode", "holdreasonfid",
+      "denialreason", "denial_reason", "denial",
+      "reason", "RefReason",
+      "note", "lineitemnote", "case_note", "memo", "memotext",
+      "address1", "address2", "city", "state", "zip", "areacode",
+      "homephone", "officephone", "officeext", "otherphone", "email"
+    ],
+    "non_phi_keep": [
+      "patient_id", "patientid",
+      "chart_number", "chart",
+      "charge_id", "chargeid", "id",
+      "visit", "visitid", "visit_id",
+      "proccode", "provcode", "provname",
+      "faccode", "facname", "facility",
+      "profile", "profileid", "profile_id", "episode", "episodeid", "episode_id",
+      "dos", "agingdate", "date", "createtime",
+      "BeginDateOfService", "EndDateOfService", "PostingDate",
+      "CreatedAt", "ChangedAt",
+      "begindate", "enddate", "begintime", "endtime",
+      "paymentplan", "void", "protected", "voideddate", "datebilled",
+      "apptstatus", "b", "i",
+      "billins", "insbilled", "lastbilledcarrier",
+      "updatestatus",
+      "units", "chargecode",
+      "pos", "tos", "posvalue", "tosvalue", "POS",
+      "duration", "aging", "batchnumber",
+      "financialclasscode", "finclasscode",
+      "acceptassign", "onhcfa", "forcepaper",
+      "itemcount", "pagecount", "page", "pagenumber",
+      "itemsfrom", "itemsto",
+      "filterhistory", "typefilter", "sortbypayment", "groupbyvisit",
+      "sortdescending", "getmemo", "from_date", "to_date",
+      "dayclosed", "isinstitutional"
+    ],
+    "strict_mode_patterns": [
+      ".*_name$",
+      ".*ssn$",
+      ".*balance$", ".*portion$", ".*amount.*",
+      ".*fee.*",
+      ".*paid$",
+      "note.*",
+      ".*reason.*",
+      ".*writeoff.*"
+    ]
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getchargedetaildata"]
+}

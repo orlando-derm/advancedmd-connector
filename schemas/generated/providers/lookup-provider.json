@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/providers/lookup-provider",
+  "title": "AMD action: lookup-provider",
+  "x-amd-action": {
+    "class_": "provider",
+    "domain": "providers",
+    "key": "lookup",
+    "name": "lookup-provider",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search providers via the generic AMD lookup endpoint (class=provider). Sibling: lookupprovider has the same purpose with slightly different paging semantics. Prefer this for plain name search; prefer lookupprovider when you need explicit exact-match or paged enumeration.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

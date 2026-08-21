@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookup-icd10",
+  "title": "AMD action: lookup-icd10",
+  "x-amd-action": {
+    "class_": "diagcode",
+    "domain": "codes",
+    "key": "lookup",
+    "name": "lookup-icd10",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search ICD-10 diagnosis codes by code (e.g. \"L82.1\") or description fragment (e.g. \"actinic keratosis\"). Returns count + matches list sorted by code. Looking up an unimported valid ICD-10 code auto-imports it into the office key. Codes are public reference data, NOT PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

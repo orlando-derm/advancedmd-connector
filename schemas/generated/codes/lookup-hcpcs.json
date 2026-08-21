@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookup-hcpcs",
+  "title": "AMD action: lookup-hcpcs",
+  "x-amd-action": {
+    "class_": "hcpcs",
+    "domain": "codes",
+    "key": "lookup",
+    "name": "lookup-hcpcs",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search HCPCS supply/injection codes (e.g. \"J3301\" for triamcinolone) by code or description fragment. Returns count + matches list. Use for billable supplies and injectable medications. Codes are public reference data, NOT PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/addehrproblem",
+  "title": "AMD action: addehrproblem",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "addehrproblem",
+    "name": "addehrproblem",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "BETA EHR WRITE STUB: would add a problem to a patient's problem list. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "icd10"
+  ],
+  "properties": {
+    "icd10": {
+      "type": "string",
+      "minLength": 1
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string"
+    }
+  }
+}

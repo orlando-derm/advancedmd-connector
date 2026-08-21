@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/addrespparty",
+  "title": "AMD action: addrespparty",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "patients",
+    "key": "addrespparty",
+    "name": "addrespparty",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would add a responsible-party (guarantor) record linked to a patient. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "respparty_name"
+  ],
+  "properties": {
+    "acct_type": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relationship": {
+      "type": "string"
+    },
+    "respparty_name": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

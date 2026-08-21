@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/upddemographic",
+  "title": "AMD action: upddemographic",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "upddemographic",
+    "name": "upddemographic",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: alternate update path for patient demographics.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "updates"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updates": {
+      "type": "object"
+    }
+  }
+}

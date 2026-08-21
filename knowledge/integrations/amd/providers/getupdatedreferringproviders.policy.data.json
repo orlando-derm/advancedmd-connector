@@ -1,0 +1,33 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getupdatedreferringproviders",
+  "domain": "providers",
+  "tier": 1,
+  "tool_name": "amd_providers_get_updated_referring_providers",
+  "redact": {
+    "phi_fields": [],
+    "non_phi_keep": [
+      "refprov_id", "rprov_id", "id",
+      "provider_name", "name", "fullname",
+      "first_name", "last_name", "middle_name", "title",
+      "code",
+      "npi", "specialty", "practicename",
+      "address1", "address2", "city", "state", "zip",
+      "areacode", "phone", "office_phone", "fax", "email",
+      "updatestatus",
+      "changedat", "createdat",
+      "servertime",
+      "since", "full_pull"
+    ],
+    "strict_mode_patterns": []
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getupdatedreferringproviders"]
+}

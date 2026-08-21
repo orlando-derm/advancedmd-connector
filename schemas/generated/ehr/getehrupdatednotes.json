@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrupdatednotes",
+  "title": "AMD action: getehrupdatednotes",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrupdatednotes",
+    "name": "getehrupdatednotes",
+    "phi_touching": true,
+    "tier": 1,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-17): delta-sync feed of EHR notes changed since ISO 8601 timestamp. High-volume PHI; off-peak Tier 1.",
+  "type": "object",
+  "required": [
+    "since"
+  ],
+  "properties": {
+    "since": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    }
+  }
+}

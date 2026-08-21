@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp-policy/v1.1",
+  "title": "AMD MCP per-action policy",
+  "description": "Validates per-action policy files at knowledge/integrations/amd/<domain>/<action>.policy.data.json. Bumped to v1.1 on 2026-06-04 per AMD_TOOLS_FULL_BUILDOUT_PLAN-final.txt MERGED-E0.1: added 4 new domains (ehr, masterfiles, system, meta); top-level `beta` flag (DUO-8); top-level `requires_streaming` flag (DUO-13); conditional-nullable tool_name when domain=='meta' (DUO-1, RISK-2). v1 schema IDs remain accepted via oneOf so legacy policy files (and the 4 existing factory.py policy_id strings) continue to validate.",
+  "type": "object",
+  "required": ["action", "domain", "tier", "tool_name", "permitted_actions"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "oneOf": [
+        {"const": "amd-mcp-policy/v1"},
+        {"const": "amd-mcp-policy/v1.1"}
+      ]
+    },
+    "action": {
+      "type": "string",
+      "description": "Raw AMD action string. Must match the action in the generated schema."
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "patients", "visits", "providers", "billing", "payments", "codes",
+        "ehr", "masterfiles", "system", "meta"
+      ]
+    },
+    "tier": {
+      "type": "integer",
+      "enum": [1, 2, 3]
+    },
+    "tool_name": {
+      "type": ["string", "null"],
+      "description": "MCP tool name; convention is amd_<domain>_<action>. May be null ONLY when domain=='meta' (helper actions suppressed from list_tools per DUO-1)."
+    },
+    "beta": {
+      "type": "boolean",
+      "default": false,
+      "description": "Top-level beta marker per DUO-8. When true, the action is flagged in audit logs and the per-server CLAUDE.md notes the beta status."
+    },
+    "requires_streaming": {
+      "type": "boolean",
+      "default": false,
+      "description": "Top-level streaming flag per DUO-13. When true, the action's transport requires streaming (e.g. uploadfile). Handlers must check this and may enforce additional caps."
+    },
+    "redact": {
+      "type": "object",
+      "properties": {
+        "phi_fields": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "non_phi_keep": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "strict_mode_patterns": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "permission": {
+      "type": "object",
+      "properties": {
+        "audience": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "audit": {
+      "type": "object",
+      "properties": {
+        "always_log": {"type": "boolean"},
+        "log_when_phi_revealed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "write_action": {
+      "type": "boolean",
+      "default": false
+    },
+    "permitted_actions": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {"type": "string"},
+          {
+            "type": "array",
+            "prefixItems": [
+              {"type": "string"},
+              {"type": "object"}
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"domain": {"const": "meta"}},
+        "required": ["domain"]
+      },
+      "then": {
+        "properties": {
+          "tool_name": {"type": ["string", "null"]}
+        }
+      },
+      "else": {
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "pattern": "^amd_[a-z]+_[a-z0-9_]+$"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

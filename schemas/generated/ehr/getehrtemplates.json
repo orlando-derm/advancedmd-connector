@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrtemplates",
+  "title": "AMD action: getehrtemplates",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrtemplates",
+    "name": "getehrtemplates",
+    "phi_touching": true,
+    "tier": 1,
+    "write": false
+  },
+  "description": "BETA EHR: List the practice's EHR note templates. Public master data.",
+  "type": "object",
+  "properties": {}
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookup-cpt",
+  "title": "AMD action: lookup-cpt",
+  "x-amd-action": {
+    "class_": "cpt",
+    "domain": "codes",
+    "key": "lookup",
+    "name": "lookup-cpt",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search CPT procedure codes by code number or description fragment (e.g. \"99213\" or \"office visit\"). Returns count + matches list sorted by code. Use whenever the user asks for a CPT code; pass codes only \u2014 no patient names. Codes are public reference data, NOT PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

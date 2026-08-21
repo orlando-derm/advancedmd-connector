@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getpatientvisits",
+  "title": "AMD action: getpatientvisits",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "getpatientvisits",
+    "name": "getpatientvisits",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List all visits for one specific patient (history). Returns patient_id, count, by_provider, by_facility, by_apptstatus, and by_year. The per-row fields (visit_id, starttime, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, reason, patient_name, chart_number) feed the summaries; the surfaced response is the aggregated envelope, not the raw rows.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "end_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/selectdiagnosiscodes",
+  "title": "AMD action: selectdiagnosiscodes",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "masterfiles",
+    "key": "selectdiagnosiscodes",
+    "name": "selectdiagnosiscodes",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List the practice's imported diagnosis codes (subset of full ICD-10). Returns count + codes. Public reference data.",
+  "type": "object",
+  "properties": {
+    "include_inactive": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

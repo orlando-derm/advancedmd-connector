@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrproblems",
+  "title": "AMD action: getehrproblems",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrproblems",
+    "name": "getehrproblems",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR: List a patient's active problem list with ICD-10 codes and statuses. PHI redacted by default.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

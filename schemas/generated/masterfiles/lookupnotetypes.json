@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/lookupnotetypes",
+  "title": "AMD action: lookupnotetypes",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "masterfiles",
+    "key": "lookupnotetypes",
+    "name": "lookupnotetypes",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search note-type master records by query. Returns count + matches with notetype_id, label. Master data, not PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

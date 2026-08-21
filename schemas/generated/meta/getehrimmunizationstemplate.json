@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getehrimmunizationstemplate",
+  "title": "AMD action: getehrimmunizationstemplate",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getehrimmunizationstemplate",
+    "name": "getehrimmunizationstemplate",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrimmunizations schema template.",
+  "type": "object",
+  "properties": {}
+}

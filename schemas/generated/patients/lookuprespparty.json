@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/lookuprespparty",
+  "title": "AMD action: lookuprespparty",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "patients",
+    "key": "lookuprespparty",
+    "name": "lookuprespparty",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search responsible-party (guarantor) records by name fragment. Returns query, count, matches, and narrow_query. matches rows: respparty_id, first_name, last_name, name. Matches capped at 5. PHI redaction default ON for guarantor names.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

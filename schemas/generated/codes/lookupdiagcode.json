@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookupdiagcode",
+  "title": "AMD action: lookupdiagcode",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "codes",
+    "key": "lookupdiagcode",
+    "name": "lookupdiagcode",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search diagnosis (ICD-10) codes via class=api with optional subtype filter. Sibling to lookup-icd10. Public reference data.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subtype": {
+      "type": "string"
+    }
+  }
+}

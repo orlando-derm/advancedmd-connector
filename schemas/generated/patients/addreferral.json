@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/addreferral",
+  "title": "AMD action: addreferral",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "patients",
+    "key": "addreferral",
+    "name": "addreferral",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB (DUO-3: lives in patients): would add a referral plan for a patient (refprov, reason, proccode, dates). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "refprov_id"
+  ],
+  "properties": {
+    "begin_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "max_amount": {
+      "type": "string"
+    },
+    "max_visits": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proccode": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "refprov_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

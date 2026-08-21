@@ -1,0 +1,40 @@
+{
+  "$schema": "amd-mcp-policy/v1.1",
+  "action": "savenotetypes",
+  "domain": "masterfiles",
+  "tier": 2,
+  "tool_name": "amd_masterfiles_savenotetypes",
+  "redact": {
+    "phi_fields": [],
+    "non_phi_keep": [
+      "id",
+      "code",
+      "name",
+      "label",
+      "description",
+      "active",
+      "facility_id",
+      "carrier_id",
+      "finclass_id",
+      "notetype_id",
+      "zip",
+      "city",
+      "state",
+      "diagnosis_code"
+    ],
+    "strict_mode_patterns": []
+  },
+  "permission": {
+    "audience": [
+      "admin"
+    ]
+  },
+  "audit": {
+    "always_log": true,
+    "log_when_phi_revealed": false
+  },
+  "write_action": true,
+  "permitted_actions": [
+    "savenotetypes"
+  ]
+}

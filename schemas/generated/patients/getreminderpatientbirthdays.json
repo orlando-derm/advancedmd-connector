@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getreminderpatientbirthdays",
+  "title": "AMD action: getreminderpatientbirthdays",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "patients",
+    "key": "getreminderpatientbirthdays",
+    "name": "getreminderpatientbirthdays",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List patients with birthdays in a date range (monthly birthday-card reminders). Returns start_date, end_date, and count only. Optional min_age and max_age scope the campaign. PHI (names, dob) redacted by default; the row-level birthday list is not surfaced.",
+  "type": "object",
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "properties": {
+    "end_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    },
+    "max_age": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "min_age": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "start_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    }
+  }
+}

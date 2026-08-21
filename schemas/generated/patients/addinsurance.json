@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/addinsurance",
+  "title": "AMD action: addinsurance",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "patients",
+    "key": "addinsurance",
+    "name": "addinsurance",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would add an insurance plan to a patient's chart. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "carrier_id",
+    "subscriber_num"
+  ],
+  "properties": {
+    "begin_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "carrier_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "coverage": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relationship": {
+      "type": "string"
+    },
+    "subscriber_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subscriber_num": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

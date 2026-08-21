@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/billing/updvisitwithnewcharges",
+  "title": "AMD action: updvisitwithnewcharges",
+  "x-amd-action": {
+    "class_": "chargeentry",
+    "domain": "billing",
+    "key": "updvisitwithnewcharges",
+    "name": "updvisitwithnewcharges",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would post a new chargelist onto an existing visit. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "episode_id",
+    "chargelist"
+  ],
+  "properties": {
+    "approval": {
+      "description": "1=charges require approval in Claim Center.",
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "chargelist": {
+      "description": "Charges to post; opaque structural placeholder for the stub.",
+      "type": "array"
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

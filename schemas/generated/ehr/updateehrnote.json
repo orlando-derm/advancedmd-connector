@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/updateehrnote",
+  "title": "AMD action: updateehrnote",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "updateehrnote",
+    "name": "updateehrnote",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "BETA EHR WRITE STUB: would update an existing EHR note. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "note_id",
+    "updates"
+  ],
+  "properties": {
+    "note_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updates": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

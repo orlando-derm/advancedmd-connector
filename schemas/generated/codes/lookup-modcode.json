@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookup-modcode",
+  "title": "AMD action: lookup-modcode",
+  "x-amd-action": {
+    "class_": "modcode",
+    "domain": "codes",
+    "key": "lookup",
+    "name": "lookup-modcode",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search billing modifier codes (e.g. \"25\" for significant E/M, \"LT\" for left side) by code or description fragment. Returns count + matches list. Use when a CPT charge needs a modifier appended. Codes are public reference data, NOT PHI.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

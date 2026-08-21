@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/visits/getupdatedvisits",
+  "title": "AMD action: getupdatedvisits",
+  "x-amd-action": {
+    "domain": "visits",
+    "key": "getupdatedvisits",
+    "name": "getupdatedvisits",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List visits whose record changed at or after an ISO 8601 since timestamp (delta-sync feed, newest first). Returns since, limit, count, by_provider, by_provider_id, by_facility, by_facility_id, by_apptstatus, and a visits list. visits rows: visit_id, starttime, lastupdated, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, profile_id, reason, patient_id, patient_name, chart_number. lastupdated is the AMD modification timestamp.",
+  "type": "object",
+  "required": [
+    "since"
+  ],
+  "properties": {
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "default": 100
+    },
+    "since": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    }
+  }
+}

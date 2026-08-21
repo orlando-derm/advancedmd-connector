@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/savenotetypes",
+  "title": "AMD action: savenotetypes",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "masterfiles",
+    "key": "savenotetypes",
+    "name": "savenotetypes",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would save practice-defined note types. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "note_types"
+  ],
+  "properties": {
+    "note_types": {
+      "description": "List of note-type definitions.",
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,2278 @@
+{
+  "$schema": "amd-mcp-action-catalog/v1",
+  "version": "2026-06-04",
+  "note": "Hand-curated catalog of AMD actions. Source: validator typed methods (workflows/appointment-validator/src/amd_client/), AMD knowledge tree (knowledge/reference/amd_api/), and legacy amd-mcp-server tools. Each entry produces one JSON Schema at schemas/generated/<domain>/<action>.json via schema_gen.py. 2026-06-04: expanded per AMD_TOOLS_FULL_BUILDOUT_PLAN-final.txt MERGED-E0.2; +62 entries across patients/visits/providers/codes/billing/masterfiles/system/ehr/meta. 12 meta-domain entries are suppressed from list_tools (DUO-1: tool_name omitted from policy, handled by _factory filter).",
+  "actions": [
+    {
+      "name": "getdemographic",
+      "domain": "patients",
+      "key": "getdemographic",
+      "tier": 2,
+      "write": false,
+      "doc": "Fetch one patient's demographic snapshot by patient_id or chart_number. Returns a single patient object: patient_id, insurance_plans (carrier code, carrier name, plan code, plan name, member id, group, effective dates), referral_plans (referring provider id and name, authorization number), chart_files (id, name, type, category, date_of_service), financial_class_code, ins_order. PHI redaction default ON; payer codes and ids are non-PHI; names and member ids are redacted unless elevation is in scope.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD patient_id (numeric string). Provide this OR chart_number."
+          },
+          "chart_number": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Chart number; alternate lookup key. Provide this OR patient_id."
+          },
+          "class_": {
+            "type": "string",
+            "enum": [
+              "api",
+              "demographics"
+            ],
+            "default": "demographics"
+          }
+        }
+      }
+    },
+    {
+      "name": "getupdatedpatients",
+      "domain": "patients",
+      "key": "getupdatedpatients",
+      "tier": 2,
+      "write": false,
+      "doc": "List patients whose record changed at or after an ISO 8601 since timestamp (delta-sync feed). Returns since, limit, count, and a patients list. patients rows: patient_id, chart_number, lastupdated. Narrow tracker for nightly-sync workflows; call getdemographic per id to hydrate the full record.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time",
+            "description": "ISO 8601 timestamp; AMD returns patients modified at or after."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 100
+          }
+        },
+        "required": [
+          "since"
+        ]
+      }
+    },
+    {
+      "name": "lookup-patient",
+      "domain": "patients",
+      "key": "lookuppatient",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search patients by name fragment or chart number; the primary way to resolve a name to a patient_id. Returns top-level query, page, count, matches, and narrow_query (true when AMD held back results because the search is too broad). Each row in matches carries patient_id, chart_number, first_name, last_name, and dob. Matches are capped at 5 to discourage enumeration. Pass only a query fragment, no PHI body.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name fragment or chart number to search."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Optional 1-based page index for paged enumeration (AARON-REVIEWABLE-2 / DUO-11 default: extend in-place rather than ship a second tool)."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "getmaster-patient",
+      "domain": "patients",
+      "key": "getmaster",
+      "class_": "patient",
+      "tier": 3,
+      "write": false,
+      "doc": "Fetch one patient's master backend record by patient_id or chart_number. Returns top-level patient_id and found (boolean). The verbose AMD master payload is not surfaced in current handler output; this tool is a presence probe, not a full demographic extractor.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getpatientvisits",
+      "domain": "patients",
+      "key": "getpatientvisits",
+      "tier": 2,
+      "write": false,
+      "doc": "List all visits for one specific patient (history). Returns patient_id, count, by_provider, by_facility, by_apptstatus, and by_year. The per-row fields (visit_id, starttime, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, reason, patient_name, chart_number) feed the summaries; the surfaced response is the aggregated envelope, not the raw rows.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getreminderappts",
+      "domain": "patients",
+      "key": "getreminderappts",
+      "tier": 2,
+      "write": false,
+      "doc": "List appointment-reminder rows for a date range (optionally one patient_id). Returns start_date, end_date, count, by_remindertype, by_provider, by_provider_id, and an appts list. appts rows: appointment_id, appointment_datetime, remindertype, provider_id, provider_name, patient_id, patient_name, phone_cell. remindertype and appointment_datetime give the visit type and start time even when the schedule-grid sibling reports them blank.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date"
+        ]
+      }
+    },
+    {
+      "name": "savedemographic",
+      "domain": "patients",
+      "key": "savedemographic",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would update patient demographics. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object",
+            "description": "Field updates."
+          }
+        },
+        "required": [
+          "patient_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "upddemographic",
+      "domain": "patients",
+      "key": "upddemographic",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: alternate update path for patient demographics.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "patient_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "getdatevisits",
+      "domain": "visits",
+      "key": "getdatevisits",
+      "tier": 2,
+      "write": false,
+      "doc": "List office visits scheduled on one specific date for this practice. Returns date, count, by_provider, by_provider_id, by_profile, by_facility, by_facility_id, by_apptstatus, and a visits list. visits rows: visit_id, starttime, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, profile_id, reason, patient_id, patient_name, chart_number. Several text fields (reason, profile, starttime, patient_name, chart_number) may be blank on this office key; empties are real.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "date"
+        ]
+      }
+    },
+    {
+      "name": "getupdatedvisits",
+      "domain": "visits",
+      "key": "getupdatedvisits",
+      "tier": 1,
+      "write": false,
+      "doc": "List visits whose record changed at or after an ISO 8601 since timestamp (delta-sync feed, newest first). Returns since, limit, count, by_provider, by_provider_id, by_facility, by_facility_id, by_apptstatus, and a visits list. visits rows: visit_id, starttime, lastupdated, duration, apptstatus, provider_id, provider_name, facility_id, facility_name, profile, profile_id, reason, patient_id, patient_name, chart_number. lastupdated is the AMD modification timestamp.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 100
+          }
+        },
+        "required": [
+          "since"
+        ]
+      }
+    },
+    {
+      "name": "getreminderrecallvisits",
+      "domain": "visits",
+      "key": "getreminderrecallvisits",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "doc": "List recall appointments (follow-up reminders due) for a date range. Returns start_date, end_date, max_recalls, count, by_remindertype, by_provider, by_provider_id, and a recalls list. recalls rows: recall_id, recall_date, remindertype, provider_id, provider_name, patient_id, patient_name, chart_number. remindertype labels the recall reason (annual skin check, biopsy follow-up, etc.) as configured in AMD.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date",
+            "description": "Recalls on or after this date."
+          },
+          "end_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date",
+            "description": "Recalls on or before this date."
+          },
+          "max_recalls": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Cap on recall visits returned."
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date"
+        ]
+      }
+    },
+    {
+      "name": "addvisit",
+      "domain": "visits",
+      "key": "addvisit",
+      "class_": "chargeentry",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would add a visit for a patient with a given provider profile. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD patient_id."
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Provider profile ID."
+          },
+          "date": {
+            "type": "string",
+            "description": "Visit date; empty string defaults to today."
+          },
+          "refplan_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional referral plan ID to link."
+          }
+        },
+        "required": [
+          "patient_id",
+          "profile_id"
+        ]
+      }
+    },
+    {
+      "name": "lookup-provider",
+      "domain": "providers",
+      "key": "lookup",
+      "class_": "provider",
+      "tier": 3,
+      "write": false,
+      "doc": "Search providers via the generic AMD lookup endpoint (class=provider). Sibling: lookupprovider has the same purpose with slightly different paging semantics. Prefer this for plain name search; prefer lookupprovider when you need explicit exact-match or paged enumeration.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "getupdatedproviders",
+      "domain": "providers",
+      "key": "getupdatedproviders",
+      "class_": "api",
+      "tier": 1,
+      "write": false,
+      "doc": "List in-practice providers added, modified, or deleted since an ISO 8601 since timestamp (delta-sync feed). Returns since, include_profiles, count, by_updatestatus, by_specialty, and a providers list. providers rows: provider_id, name, code, npi, specialty, updatestatus, changedat, createdat. Off-peak Tier 1.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time",
+            "description": "Saved servertime from previous response (datechanged); ISO 8601."
+          },
+          "include_profiles": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, include each provider's profilelist."
+          }
+        },
+        "required": [
+          "since"
+        ]
+      }
+    },
+    {
+      "name": "getupdatedreferringproviders",
+      "domain": "providers",
+      "key": "getupdatedreferringproviders",
+      "class_": "api",
+      "tier": 1,
+      "write": false,
+      "doc": "List referring providers (external doctors who refer into this practice) added or modified since an ISO 8601 since timestamp. Empty since returns the full referring-provider roster (bootstrap pull). Returns since, full_pull, count, by_specialty, and a refproviders list. refproviders rows: refprovider_id, name, code, specialty, practicename. Off-peak Tier 1.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Saved servertime; if empty, AMD returns all referring providers. Omit or pass empty string for bootstrap full-pull."
+          }
+        }
+      }
+    },
+    {
+      "name": "lookupprovider",
+      "domain": "providers",
+      "key": "lookupprovider",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Resolve a provider's name (full or fragment) to a provider_id and specialty. Returns name, exact_match, page, count, by_specialty, and a providers list. providers rows: provider_id, name, code, npi, specialty. Set exact_match true to require a literal match; pass page to paginate long rosters. Pass the resolved provider_id to downstream tools rather than guessing.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name fragment to search. Empty allowed for paged enumeration."
+          },
+          "exact_match": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, exact-name matching only."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "1-based page index for paged results."
+          }
+        }
+      }
+    },
+    {
+      "name": "lookup-cpt",
+      "domain": "codes",
+      "key": "lookupproccode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search CPT procedure codes by code number or description fragment (e.g. \"99213\" or \"office visit\"). Returns count + matches list sorted by code. Use whenever the user asks for a CPT code; pass codes only \u2014 no patient names. Codes are public reference data, NOT PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookup-icd10",
+      "domain": "codes",
+      "key": "lookupdiagcode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search ICD-10 diagnosis codes by code (e.g. \"L82.1\") or description fragment (e.g. \"actinic keratosis\"). Returns count + matches list sorted by code. Looking up an unimported valid ICD-10 code auto-imports it into the office key. Codes are public reference data, NOT PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookup-hcpcs",
+      "domain": "codes",
+      "key": "lookupproccode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search HCPCS supply/injection codes (e.g. \"J3301\" for triamcinolone) by code or description fragment. Returns count + matches list. Use for billable supplies and injectable medications. Codes are public reference data, NOT PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookup-modcode",
+      "domain": "codes",
+      "key": "lookupmodcode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search billing modifier codes (e.g. \"25\" for significant E/M, \"LT\" for left side) by code or description fragment. Returns count + matches list. Use when a CPT charge needs a modifier appended. Codes are public reference data, NOT PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "getchargedetaildata",
+      "domain": "billing",
+      "key": "getchargedetaildata",
+      "class_": "demographics",
+      "tier": 2,
+      "write": false,
+      "doc": "Fetch the detail envelope for ONE specific charge_id (visit context + status flags). Use when a charge needs to be inspected for void/billed/paymentplan status. Financial amounts (fee, paid, balances) are REDACTED \u2014 they do not appear in this tool's output. For a patient's full financial history use gettxhistory.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "charge_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD charge ID."
+          }
+        },
+        "required": [
+          "charge_id"
+        ]
+      }
+    },
+    {
+      "name": "savecharges",
+      "domain": "billing",
+      "key": "savecharges",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would save a chargelist against a visit (voids existing charges on the visit per AMD semantics). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "visit_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "force": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0,
+            "description": "1=allow duplicate charges on same DOS/provider/patient."
+          },
+          "chargelist": {
+            "type": "array",
+            "description": "Charges to save; opaque structural placeholder for the stub."
+          }
+        },
+        "required": [
+          "patient_id",
+          "visit_id",
+          "chargelist"
+        ]
+      }
+    },
+    {
+      "name": "updvisitwithnewcharges",
+      "domain": "billing",
+      "key": "updvisitwithnewcharges",
+      "class_": "chargeentry",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would post a new chargelist onto an existing visit. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "episode_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0,
+            "description": "1=charges require approval in Claim Center."
+          },
+          "chargelist": {
+            "type": "array",
+            "description": "Charges to post; opaque structural placeholder for the stub."
+          }
+        },
+        "required": [
+          "patient_id",
+          "episode_id",
+          "chargelist"
+        ]
+      }
+    },
+    {
+      "name": "gettxhistory",
+      "domain": "payments",
+      "key": "gettxhistory",
+      "class_": "demographics",
+      "tier": 2,
+      "write": false,
+      "doc": "List one patient's transaction history (charges + payments + write-offs) with by_provcode + by_void + by_paymentplan summaries. Use for \"is this patient on a payment plan?\" or \"are any charges voided?\". Raw dollar amounts are REDACTED \u2014 status flags and last-payment dates remain visible. No `sum_amount` is returned (aggregating redacted markers is meaningless).",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD patientid."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "1-based page index; AMD returns pagecount in response."
+          },
+          "filterhistory": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0,
+            "description": "AMD spec: set 0."
+          },
+          "typefilter": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "default": 1,
+            "description": "0=All, 1=Open, 2=Voided, 3=Unbilled. Voids excluded when 1 or 3."
+          },
+          "sortbypayment": {
+            "type": "integer",
+            "enum": [
+              -1,
+              0
+            ],
+            "default": 0,
+            "description": "0=by service type; -1=by payment type (charges omitted from result)."
+          },
+          "groupbyvisit": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "sortdescending": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1,
+            "description": "Sort by service date desc/asc."
+          },
+          "profile_id": {
+            "type": "string",
+            "description": "Optional provider profile filter; empty = all."
+          },
+          "getmemo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0,
+            "description": "1 = include non-expired patient memos."
+          },
+          "from_date": {
+            "type": "string",
+            "description": "Optional service-date lower bound (MM/DD/YYYY)."
+          },
+          "to_date": {
+            "type": "string",
+            "description": "Optional service-date upper bound (MM/DD/YYYY)."
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "addpayments",
+      "domain": "payments",
+      "key": "addpayments",
+      "class_": "paymententry",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would post a payment for a patient (apply against chargelist or place on unappliedpaymentlist). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD patientid."
+          },
+          "amount": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Payment amount (dollars as string, e.g. '25.00')."
+          },
+          "paysource": {
+            "type": "integer",
+            "description": "AMD pay-source code."
+          },
+          "paycode": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMD pay code (e.g. 'PP' personal payment)."
+          },
+          "paymethod": {
+            "type": "integer",
+            "description": "AMD payment method code."
+          },
+          "checknumber": {
+            "type": "string",
+            "description": "Optional check number (PHI; redacted on read)."
+          },
+          "carrierid": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional carrier ID for insurance payments."
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Provider profile to attribute to."
+          },
+          "checkout": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "date": {
+            "type": "string",
+            "description": "Payment date; empty defaults to today."
+          },
+          "batch": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional batch ID if practice uses batching."
+          }
+        },
+        "required": [
+          "patient_id",
+          "amount",
+          "paycode"
+        ]
+      }
+    },
+    {
+      "name": "getcustomdata",
+      "domain": "patients",
+      "key": "getcustomdata",
+      "class_": "providerdesktop",
+      "tier": 2,
+      "write": false,
+      "doc": "Fetch one patient's custom-tab data (practice-defined custom fields keyed by tab and section). Returns patient_id and found (boolean). Custom field set varies by practice and is not enumerable here; PHI redaction default ON (value, valuecode, valuename redacted).",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "includeindemographics": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getreminderpatientbirthdays",
+      "domain": "patients",
+      "key": "getreminderpatientbirthdays",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "doc": "List patients with birthdays in a date range (monthly birthday-card reminders). Returns start_date, end_date, and count only. Optional min_age and max_age scope the campaign. PHI (names, dob) redacted by default; the row-level birthday list is not surfaced.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "min_age": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "max_age": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date"
+        ]
+      }
+    },
+    {
+      "name": "lookuprespparty",
+      "domain": "patients",
+      "key": "lookuprespparty",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search responsible-party (guarantor) records by name fragment. Returns query, count, matches, and narrow_query. matches rows: respparty_id, first_name, last_name, name. Matches capped at 5. PHI redaction default ON for guarantor names.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "addpatient",
+      "domain": "patients",
+      "key": "addpatient",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would create a new patient record with respparty + insplan + carrier links. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dob": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F",
+              "U"
+            ]
+          },
+          "ssn": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Provider profile."
+          },
+          "respparty_name": {
+            "type": "string",
+            "description": "Responsible party label (e.g. SELF)."
+          },
+          "address": {
+            "type": "object",
+            "description": "Optional address block."
+          },
+          "contactinfo": {
+            "type": "object",
+            "description": "Optional contact-info block."
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "dob",
+          "profile"
+        ]
+      }
+    },
+    {
+      "name": "updatepatient",
+      "domain": "patients",
+      "key": "updatepatient",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would update an existing patient record (force=1 supported). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object",
+            "description": "Field updates."
+          },
+          "force": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          }
+        },
+        "required": [
+          "patient_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "addinsurance",
+      "domain": "patients",
+      "key": "addinsurance",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would add an insurance plan to a patient's chart. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "carrier_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subscriber_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subscriber_num": {
+            "type": "string",
+            "minLength": 1
+          },
+          "begin_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patient_id",
+          "carrier_id",
+          "subscriber_num"
+        ]
+      }
+    },
+    {
+      "name": "updateinsurance",
+      "domain": "patients",
+      "key": "updateinsurance",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would update an existing insurance plan for a patient (sequence-aware). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "insplan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "updates": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "patient_id",
+          "insplan_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "savepatientnotes",
+      "domain": "patients",
+      "key": "savepatientnotes",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would save free-text patient notes (clinic remarks, billing notes). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "note_type": {
+            "type": "string"
+          },
+          "note_text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id",
+          "note_text"
+        ]
+      }
+    },
+    {
+      "name": "addrespparty",
+      "domain": "patients",
+      "key": "addrespparty",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would add a responsible-party (guarantor) record linked to a patient. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "respparty_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "acct_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patient_id",
+          "respparty_name"
+        ]
+      }
+    },
+    {
+      "name": "addreferral",
+      "domain": "patients",
+      "key": "addreferral",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB (DUO-3: lives in patients): would add a referral plan for a patient (refprov, reason, proccode, dates). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "refprov_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          },
+          "proccode": {
+            "type": "string"
+          },
+          "begin_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "max_visits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "max_amount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patient_id",
+          "refprov_id"
+        ]
+      }
+    },
+    {
+      "name": "updatereferral",
+      "domain": "patients",
+      "key": "updatereferral",
+      "class_": "demographics",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB (DUO-3: lives in patients): would update an existing referral plan on a patient's chart. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "refplan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "patient_id",
+          "refplan_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "uploadfile",
+      "domain": "patients",
+      "key": "uploadfile",
+      "class_": "files",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB (AARON-REVIEWABLE-1 default: lives in patients): would upload a file (base64 contents) to a patient's chart. Streaming flagged (requires_streaming=true); handler enforces 1024kb cap. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file_ext": {
+            "type": "string",
+            "minLength": 1
+          },
+          "filetype": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "file_contents_b64": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Base64-encoded file body. Hard cap 1024kb at handler level."
+          },
+          "local_file_size_hint_kb": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional size hint in kb for pre-flight cap check."
+          }
+        },
+        "required": [
+          "patient_id",
+          "file_name",
+          "file_contents_b64"
+        ]
+      }
+    },
+    {
+      "name": "getupdatedpatientstemplate",
+      "domain": "meta",
+      "key": "getupdatedpatientstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed from list_tools): returns the static schema metadata for getupdatedpatients. Used by schema_gen and tests, never invoked by Adam.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getfieldsets",
+      "domain": "meta",
+      "key": "getfieldsets",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed from list_tools): returns the AMD field-set metadata. Used by tests and tooling, never invoked by Adam.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getupdatedvisitstemplate",
+      "domain": "meta",
+      "key": "getupdatedvisitstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getupdatedvisits schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "lookupprofile",
+      "domain": "providers",
+      "key": "lookupprofile",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search provider profile records (provider, facility, financial-class combinations) by query string. Returns query, count, matches, and narrow_query (true when results were held back because the query is too broad). matches rows: profile_id, name, code. Matches capped at 5. profile_id is what charge entry and visit creation expect.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookuprefprovider",
+      "domain": "providers",
+      "key": "lookuprefprovider",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search referring-provider records by name fragment. Returns query, count, matches, and narrow_query. matches rows: refprovider_id, name, code, specialty, practicename. Matches capped at 5. refprovider_id is the value addreferral and updatereferral expect.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "getupdatedproviderstemplate",
+      "domain": "meta",
+      "key": "getupdatedproviderstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getupdatedproviders schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "lookupproccode",
+      "domain": "codes",
+      "key": "lookupproccode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search procedure (CPT) codes via class=api with optional subtype filter. Sibling to lookup-cpt; docx class differs (api vs cpt). Public reference data, NOT PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Optional subtype filter from docx (e.g. surgical, e/m)."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupdiagcode",
+      "domain": "codes",
+      "key": "lookupdiagcode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search diagnosis (ICD-10) codes via class=api with optional subtype filter. Sibling to lookup-icd10. Public reference data.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subtype": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupmodcode",
+      "domain": "codes",
+      "key": "lookupmodcode",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "Search modifier codes via class=api with optional subtype filter. Sibling to lookup-modcode (class=modcode). Public reference data.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subtype": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "newbatch",
+      "domain": "billing",
+      "key": "newbatch",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would create a new billing batch (header for grouping charges/payments). Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "batch_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "batch_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "profile_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_name"
+        ]
+      }
+    },
+    {
+      "name": "lookupcarrier",
+      "domain": "masterfiles",
+      "key": "lookupcarrier",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search insurance carriers in the practice master file by query. Returns count + matches with carrier_id, carrier_code, carrier_name. Public master data.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Optional carrier subtype filter."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupfinclass",
+      "domain": "masterfiles",
+      "key": "lookupfinclass",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search financial-class master records by query. Returns count + matches with finclass_id, finclass_code, name. Master data, not PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupaccttype",
+      "domain": "masterfiles",
+      "key": "lookupaccttype",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search account-type master records by query. Returns count + matches. Master data, not PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupzipcode",
+      "domain": "masterfiles",
+      "key": "lookupzipcode",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search the master zipcode table by code prefix or city. Returns count + matches with zip, city, state. Public reference data.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "lookupnotetypes",
+      "domain": "masterfiles",
+      "key": "lookupnotetypes",
+      "class_": "lookup",
+      "tier": 3,
+      "write": false,
+      "doc": "Search note-type master records by query. Returns count + matches with notetype_id, label. Master data, not PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "selectfacilities",
+      "domain": "masterfiles",
+      "key": "selectfacilities",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "doc": "List all facility master records. Returns count + facilities with id, code, name, address. Master data, not PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "active_only": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "name": "selectdiagnosiscodes",
+      "domain": "masterfiles",
+      "key": "selectdiagnosiscodes",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "doc": "List the practice's imported diagnosis codes (subset of full ICD-10). Returns count + codes. Public reference data.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "include_inactive": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "selectuserfiletemplates",
+      "domain": "masterfiles",
+      "key": "selectuserfiletemplates",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "doc": "List the practice's user-defined file templates, optionally scoped to a template type. Returns count + templates. Master data, not PHI.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "template_type": {
+            "type": "string",
+            "description": "Optional template-type filter."
+          }
+        }
+      }
+    },
+    {
+      "name": "savenotetypes",
+      "domain": "masterfiles",
+      "key": "savenotetypes",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "doc": "WRITE STUB: would save practice-defined note types. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "note_types": {
+            "type": "array",
+            "description": "List of note-type definitions."
+          }
+        },
+        "required": [
+          "note_types"
+        ]
+      }
+    },
+    {
+      "name": "getsysdefaults",
+      "domain": "system",
+      "key": "getsysdefaults",
+      "class_": "api",
+      "tier": 1,
+      "write": false,
+      "doc": "Fetch system defaults: large nested categories payload (places of service, ROS categories, billing options, etc). CAV per DUO-15: payload may be >10MB. Caller should cache and paginate at request level. Off-peak Tier 1.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "category_filter": {
+            "type": "string",
+            "description": "Optional comma-separated category whitelist to reduce payload."
+          }
+        }
+      }
+    },
+    {
+      "name": "getehrallergies",
+      "domain": "ehr",
+      "key": "getehrallergies",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List a patient's allergies with status, reaction, treatment, drug-allergy category. PHI redacted by default (allergy, reaction, treatment).",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrhwplans",
+      "domain": "ehr",
+      "key": "getehrhwplans",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List a patient's health-and-wellness plans. PHI redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrimmunizations",
+      "domain": "ehr",
+      "key": "getehrimmunizations",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List a patient's immunizations with dates and types. PHI redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrmedications",
+      "domain": "ehr",
+      "key": "getehrmedications",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List a patient's medications with dosage, frequency, prescriber. PHI redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrprofiles",
+      "domain": "ehr",
+      "key": "getehrprofiles",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List EHR provider-profile records used by EHR notes and orders.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "getehrproblems",
+      "domain": "ehr",
+      "key": "getehrproblems",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List a patient's active problem list with ICD-10 codes and statuses. PHI redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrtemplates",
+      "domain": "ehr",
+      "key": "getehrtemplates",
+      "class_": "api",
+      "tier": 1,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR: List the practice's EHR note templates. Public master data.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrlabresults",
+      "domain": "ehr",
+      "key": "getehrlabresults",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-17): list a patient's lab results. resultvalue is clinical PHI; strict_mode_patterns required.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrnotes",
+      "domain": "ehr",
+      "key": "getehrnotes",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-17): list a patient's EHR notes. Heavy free-text PHI; redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrnotesbyvisit",
+      "domain": "ehr",
+      "key": "getehrnotesbyvisit",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-17): list EHR notes scoped to one visit. Heavy free-text PHI; redacted by default.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "visit_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "visit_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrupdatednotes",
+      "domain": "ehr",
+      "key": "getehrupdatednotes",
+      "class_": "api",
+      "tier": 1,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-17): delta-sync feed of EHR notes changed since ISO 8601 timestamp. High-volume PHI; off-peak Tier 1.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "since"
+        ]
+      }
+    },
+    {
+      "name": "getehrccdadata",
+      "domain": "ehr",
+      "key": "getehrccdadata",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-17): fetch CCDA structured-data payload for a patient. Strict redact across all named fields.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "getehrccdadocument",
+      "domain": "ehr",
+      "key": "getehrccdadocument",
+      "class_": "api",
+      "tier": 2,
+      "write": false,
+      "beta": true,
+      "doc": "BETA EHR (CAV per DUO-5, DUO-17): fetch the CCDA ClinicalDocument XML blob for a patient. Handler-level body replacement is MANDATORY: when ALLOW_PHI is false, ClinicalDocument string is replaced with '[REDACTED:CCDA]' before return.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "patient_id"
+        ]
+      }
+    },
+    {
+      "name": "addehrnote",
+      "domain": "ehr",
+      "key": "addehrnote",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would create an EHR note with polymorphic fields. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "template_id": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Polymorphic field-set payload.",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "patient_id",
+          "fields"
+        ]
+      }
+    },
+    {
+      "name": "addehrnotebyvisit",
+      "domain": "ehr",
+      "key": "addehrnotebyvisit",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would create an EHR note scoped to a visit. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "visit_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "template_id": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "visit_id",
+          "fields"
+        ]
+      }
+    },
+    {
+      "name": "updateehrnote",
+      "domain": "ehr",
+      "key": "updateehrnote",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would update an existing EHR note. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "note_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "addehrproblem",
+      "domain": "ehr",
+      "key": "addehrproblem",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would add a problem to a patient's problem list. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "icd10": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patient_id",
+          "icd10"
+        ]
+      }
+    },
+    {
+      "name": "updateehrproblem",
+      "domain": "ehr",
+      "key": "updateehrproblem",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would update a problem record. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "problem_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "addehrhwplans",
+      "domain": "ehr",
+      "key": "addehrhwplans",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB (docx singular: addehrhwplan): would add a health-and-wellness plan. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "patient_id",
+          "plan"
+        ]
+      }
+    },
+    {
+      "name": "updateehrhwplans",
+      "domain": "ehr",
+      "key": "updateehrhwplans",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would update an existing HW plan. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updates": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan_id",
+          "updates"
+        ]
+      }
+    },
+    {
+      "name": "saveehrccdadata",
+      "domain": "ehr",
+      "key": "saveehrccdadata",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would save CCDA structured data. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ccda_payload": {
+            "type": "object",
+            "description": "Structured CCDA data; opaque structural placeholder for the stub."
+          }
+        },
+        "required": [
+          "patient_id",
+          "ccda_payload"
+        ]
+      }
+    },
+    {
+      "name": "saveehrccdadocument",
+      "domain": "ehr",
+      "key": "saveehrccdadocument",
+      "class_": "api",
+      "tier": 2,
+      "write": true,
+      "beta": true,
+      "doc": "BETA EHR WRITE STUB: would save a CCDA ClinicalDocument XML blob. Handler does not parse; opaque body. Hidden by WRITE_TOOLS_ENABLED=False.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clinical_document_xml": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque XML body (not parsed)."
+          }
+        },
+        "required": [
+          "patient_id",
+          "clinical_document_xml"
+        ]
+      }
+    },
+    {
+      "name": "getehrhwplanstemplate",
+      "domain": "meta",
+      "key": "getehrhwplanstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrhwplans schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrimmunizationstemplate",
+      "domain": "meta",
+      "key": "getehrimmunizationstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrimmunizations schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrlabresultstemplate",
+      "domain": "meta",
+      "key": "getehrlabresultstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrlabresults schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrmedicationstemplate",
+      "domain": "meta",
+      "key": "getehrmedicationstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrmedications schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrnotestemplate",
+      "domain": "meta",
+      "key": "getehrnotestemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrnotes schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrproblemstemplate",
+      "domain": "meta",
+      "key": "getehrproblemstemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrproblems schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrtemplatestemplate",
+      "domain": "meta",
+      "key": "getehrtemplatestemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrs schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getehrallergiestemplate",
+      "domain": "meta",
+      "key": "getehrallergiestemplate",
+      "class_": "api",
+      "tier": 3,
+      "write": false,
+      "doc": "META HELPER (DUO-1: tool_name=null, suppressed): returns getehrallergies schema template.",
+      "input": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

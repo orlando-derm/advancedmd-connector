@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/savepatientnotes",
+  "title": "AMD action: savepatientnotes",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "patients",
+    "key": "savepatientnotes",
+    "name": "savepatientnotes",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would save free-text patient notes (clinic remarks, billing notes). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "note_text"
+  ],
+  "properties": {
+    "note_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "note_type": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

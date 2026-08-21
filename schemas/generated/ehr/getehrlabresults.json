@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrlabresults",
+  "title": "AMD action: getehrlabresults",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrlabresults",
+    "name": "getehrlabresults",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-17): list a patient's lab results. resultvalue is clinical PHI; strict_mode_patterns required.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

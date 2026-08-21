@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getupdatedpatients",
+  "title": "AMD action: getupdatedpatients",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "getupdatedpatients",
+    "name": "getupdatedpatients",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List patients whose record changed at or after an ISO 8601 since timestamp (delta-sync feed). Returns since, limit, count, and a patients list. patients rows: patient_id, chart_number, lastupdated. Narrow tracker for nightly-sync workflows; call getdemographic per id to hydrate the full record.",
+  "type": "object",
+  "required": [
+    "since"
+  ],
+  "properties": {
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "default": 100
+    },
+    "since": {
+      "description": "ISO 8601 timestamp; AMD returns patients modified at or after.",
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    }
+  }
+}

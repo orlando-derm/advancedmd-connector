@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrnotes",
+  "title": "AMD action: getehrnotes",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrnotes",
+    "name": "getehrnotes",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-17): list a patient's EHR notes. Heavy free-text PHI; redacted by default.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

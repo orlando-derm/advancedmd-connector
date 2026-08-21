@@ -1,0 +1,32 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getupdatedproviders",
+  "domain": "providers",
+  "tier": 1,
+  "tool_name": "amd_providers_get_updated_providers",
+  "redact": {
+    "phi_fields": [],
+    "non_phi_keep": [
+      "provider_id", "id",
+      "provider_name", "name", "fullname",
+      "first_name", "last_name", "middle_name", "title",
+      "code", "profilecode", "profile_id",
+      "npi", "specialty", "specialty_code",
+      "updatestatus",
+      "changedat", "createdat",
+      "servertime", "providercount",
+      "since", "include_profiles",
+      "profilelist", "profile"
+    ],
+    "strict_mode_patterns": []
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getupdatedproviders"]
+}

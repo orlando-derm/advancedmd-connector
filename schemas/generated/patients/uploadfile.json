@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/uploadfile",
+  "title": "AMD action: uploadfile",
+  "x-amd-action": {
+    "class_": "files",
+    "domain": "patients",
+    "key": "uploadfile",
+    "name": "uploadfile",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB (AARON-REVIEWABLE-1 default: lives in patients): would upload a file (base64 contents) to a patient's chart. Streaming flagged (requires_streaming=true); handler enforces 1024kb cap. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "file_name",
+    "file_contents_b64"
+  ],
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "file_contents_b64": {
+      "description": "Base64-encoded file body. Hard cap 1024kb at handler level.",
+      "type": "string",
+      "minLength": 1
+    },
+    "file_ext": {
+      "type": "string",
+      "minLength": 1
+    },
+    "file_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "filetype": {
+      "type": "string"
+    },
+    "local_file_size_hint_kb": {
+      "description": "Optional size hint in kb for pre-flight cap check.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

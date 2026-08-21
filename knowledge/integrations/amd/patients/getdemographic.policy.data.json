@@ -1,0 +1,43 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getdemographic",
+  "domain": "patients",
+  "tier": 2,
+  "tool_name": "amd_patients_get_demographic",
+  "redact": {
+    "phi_fields": [
+      "first_name", "firstname", "last_name", "lastname",
+      "middle_name", "middlename",
+      "dob", "date_of_birth", "birthdate",
+      "ssn", "social_security_number",
+      "address", "address1", "address2",
+      "city", "zip", "postal_code",
+      "phone_home", "phone_cell", "phone_work",
+      "email",
+      "member_id", "subscriber_number", "subscriber_dob",
+      "subscriber_firstname", "subscriber_lastname",
+      "guarantor_firstname", "guarantor_lastname",
+      "guarantor_dob", "guarantor_ssn"
+    ],
+    "non_phi_keep": [
+      "patient_id", "chart_number",
+      "carrier_code", "carrier_name", "carrier_id",
+      "primary_insurance_carrier_code",
+      "primary_insurance_carrier_name",
+      "provider_id", "provider_name",
+      "rendering_provider_id", "referring_provider_id",
+      "appointment_id", "appointment_type",
+      "plan_type", "place_of_service"
+    ],
+    "strict_mode_patterns": [".*_name$", ".*phone$", ".*_dob$"]
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getdemographic"]
+}

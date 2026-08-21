@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/codes/lookupmodcode",
+  "title": "AMD action: lookupmodcode",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "codes",
+    "key": "lookupmodcode",
+    "name": "lookupmodcode",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search modifier codes via class=api with optional subtype filter. Sibling to lookup-modcode (class=modcode). Public reference data.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subtype": {
+      "type": "string"
+    }
+  }
+}

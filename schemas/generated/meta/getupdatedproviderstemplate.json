@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getupdatedproviderstemplate",
+  "title": "AMD action: getupdatedproviderstemplate",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getupdatedproviderstemplate",
+    "name": "getupdatedproviderstemplate",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed): returns getupdatedproviders schema template.",
+  "type": "object",
+  "properties": {}
+}

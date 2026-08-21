@@ -1,0 +1,25 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "lookup-modcode",
+  "domain": "codes",
+  "tier": 3,
+  "tool_name": "amd_codes_lookup_modcode",
+  "redact": {
+    "phi_fields": [],
+    "non_phi_keep": [
+      "id", "code", "name", "description",
+      "category", "effective_date", "term_date",
+      "_tag", "_attrs"
+    ],
+    "strict_mode_patterns": []
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": false
+  },
+  "write_action": false,
+  "permitted_actions": [["lookupmodcode", {"class_": ["api"]}]]
+}

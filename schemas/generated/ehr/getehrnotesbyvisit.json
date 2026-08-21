@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/getehrnotesbyvisit",
+  "title": "AMD action: getehrnotesbyvisit",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "getehrnotesbyvisit",
+    "name": "getehrnotesbyvisit",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "BETA EHR (CAV per DUO-17): list EHR notes scoped to one visit. Heavy free-text PHI; redacted by default.",
+  "type": "object",
+  "required": [
+    "visit_id"
+  ],
+  "properties": {
+    "visit_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

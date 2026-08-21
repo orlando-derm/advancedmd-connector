@@ -1,0 +1,62 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "gettxhistory",
+  "domain": "payments",
+  "tier": 2,
+  "tool_name": "amd_payments_get_tx_history",
+  "redact": {
+    "phi_fields": [
+      "first_name", "last_name", "dob", "patient_name", "name",
+      "ssn", "patient",
+      "fee", "paid", "patbal", "insbal", "totbal",
+      "patientportion", "insportion", "allowed", "units",
+      "sumpatcharges", "suminscharges",
+      "sumpatpayments", "suminspayments",
+      "sumpatwriteoffs", "suminswriteoffs",
+      "checknumber", "paymethod", "paycode", "carrier",
+      "lastpmtamount", "laststmtamount",
+      "case_note"
+    ],
+    "non_phi_keep": [
+      "patient_id", "patientid", "chart_number", "chart",
+      "id", "chargeid", "resppartyid",
+      "visit", "chargeseq", "seq",
+      "void", "protected", "paymentplan",
+      "has_outstanding_balance", "account_status",
+      "lastpmtdate", "laststmtdate",
+      "depositdate", "postingdate", "agingdate",
+      "dos", "last_payment_date",
+      "provcode", "provname", "provider_id", "provider_name",
+      "faccode", "facname", "facility_id", "facility",
+      "profileid", "profile",
+      "proccode",
+      "pagenumber", "pagecount", "itemcount",
+      "itemsfrom", "itemsto", "page",
+      "maxunfiltereddate", "oldestcharge", "newestcharge",
+      "filterhistory", "typefilter",
+      "sortbypayment", "groupbyvisit", "sortdescending",
+      "fromdate", "todate", "getmemo"
+    ],
+    "strict_mode_patterns": [
+      ".*_name$",
+      ".*amount$",
+      ".*bal$",
+      "^sum[a-z]+payments?$",
+      "^sum[a-z]+charges?$",
+      "^sum[a-z]+writeoffs?$",
+      "^last.*amount$",
+      "^last.*pmtamount$",
+      ".*ssn$",
+      ".*dob$"
+    ]
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["gettxhistory"]
+}

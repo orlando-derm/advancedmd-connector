@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/saveehrccdadata",
+  "title": "AMD action: saveehrccdadata",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "saveehrccdadata",
+    "name": "saveehrccdadata",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "BETA EHR WRITE STUB: would save CCDA structured data. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "ccda_payload"
+  ],
+  "properties": {
+    "ccda_payload": {
+      "description": "Structured CCDA data; opaque structural placeholder for the stub.",
+      "type": "object"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

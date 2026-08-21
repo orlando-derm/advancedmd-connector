@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getdemographic",
+  "title": "AMD action: getdemographic",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "getdemographic",
+    "name": "getdemographic",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "Fetch one patient's demographic snapshot by patient_id or chart_number. Returns a single patient object: patient_id, insurance_plans (carrier code, carrier name, plan code, plan name, member id, group, effective dates), referral_plans (referring provider id and name, authorization number), chart_files (id, name, type, category, date_of_service), financial_class_code, ins_order. PHI redaction default ON; payer codes and ids are non-PHI; names and member ids are redacted unless elevation is in scope.",
+  "type": "object",
+  "properties": {
+    "chart_number": {
+      "description": "Chart number; alternate lookup key. Provide this OR patient_id.",
+      "type": "string",
+      "minLength": 1
+    },
+    "class_": {
+      "type": "string",
+      "enum": [
+        "api",
+        "demographics"
+      ],
+      "default": "demographics"
+    },
+    "patient_id": {
+      "description": "AMD patient_id (numeric string). Provide this OR chart_number.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

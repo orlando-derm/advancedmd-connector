@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/savedemographic",
+  "title": "AMD action: savedemographic",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "savedemographic",
+    "name": "savedemographic",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would update patient demographics. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "updates"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updates": {
+      "description": "Field updates.",
+      "type": "object"
+    }
+  }
+}

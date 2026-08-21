@@ -1,0 +1,14 @@
+{
+  "$schema": "amd-mcp-policy/v1.1",
+  "action": "getehrallergiestemplate",
+  "domain": "meta",
+  "tier": 3,
+  "tool_name": null,
+  "permitted_actions": [
+    "getehrallergiestemplate"
+  ],
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": false
+  }
+}

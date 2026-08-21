@@ -16,3 +16,12 @@ build/
 .pytest_cache/
 # vendor documentation is not redistributable
 knowledge/**/*.docx
+
+# P0 scaffold additions
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+tokens.json.bak
+# fixture recordings land here only after operator review (SPEC 23.3)
+tests/fixtures/*.tmp.xml

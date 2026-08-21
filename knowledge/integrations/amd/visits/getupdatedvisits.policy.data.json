@@ -1,0 +1,28 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getupdatedvisits",
+  "domain": "visits",
+  "tier": 1,
+  "tool_name": "amd_visits_get_updated_visits",
+  "redact": {
+    "phi_fields": ["first_name", "last_name", "dob", "patient_name", "name", "notes"],
+    "non_phi_keep": [
+      "patient_id", "chart_number",
+      "appointment_id", "visit_id", "appointment_type",
+      "provider_id", "provider_name", "scheduled_date",
+      "appointment_datetime", "visit_status",
+      "since", "limit", "updated_at",
+      "facility_id", "facility", "profile_id", "profile", "reason"
+    ],
+    "strict_mode_patterns": [".*_name$", ".*note.*"]
+  },
+  "permission": {
+    "audience": ["front_desk", "admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": ["getupdatedvisits"]
+}

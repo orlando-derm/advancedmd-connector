@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/system/getsysdefaults",
+  "title": "AMD action: getsysdefaults",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "system",
+    "key": "getsysdefaults",
+    "name": "getsysdefaults",
+    "phi_touching": true,
+    "tier": 1,
+    "write": false
+  },
+  "description": "Fetch system defaults: large nested categories payload (places of service, ROS categories, billing options, etc). CAV per DUO-15: payload may be >10MB. Caller should cache and paginate at request level. Off-peak Tier 1.",
+  "type": "object",
+  "properties": {
+    "category_filter": {
+      "description": "Optional comma-separated category whitelist to reduce payload.",
+      "type": "string"
+    }
+  }
+}

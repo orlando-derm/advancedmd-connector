@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/payments/addpayments",
+  "title": "AMD action: addpayments",
+  "x-amd-action": {
+    "class_": "paymententry",
+    "domain": "payments",
+    "key": "addpayments",
+    "name": "addpayments",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would post a payment for a patient (apply against chargelist or place on unappliedpaymentlist). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "amount",
+    "paycode"
+  ],
+  "properties": {
+    "amount": {
+      "description": "Payment amount (dollars as string, e.g. '25.00').",
+      "type": "string",
+      "minLength": 1
+    },
+    "batch": {
+      "description": "Optional batch ID if practice uses batching.",
+      "type": "string",
+      "minLength": 1
+    },
+    "carrierid": {
+      "description": "Optional carrier ID for insurance payments.",
+      "type": "string",
+      "minLength": 1
+    },
+    "checknumber": {
+      "description": "Optional check number (PHI; redacted on read).",
+      "type": "string"
+    },
+    "checkout": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "date": {
+      "description": "Payment date; empty defaults to today.",
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "AMD patientid.",
+      "type": "string",
+      "minLength": 1
+    },
+    "paycode": {
+      "description": "AMD pay code (e.g. 'PP' personal payment).",
+      "type": "string",
+      "minLength": 1
+    },
+    "paymethod": {
+      "description": "AMD payment method code.",
+      "type": "integer"
+    },
+    "paysource": {
+      "description": "AMD pay-source code.",
+      "type": "integer"
+    },
+    "profile_id": {
+      "description": "Provider profile to attribute to.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

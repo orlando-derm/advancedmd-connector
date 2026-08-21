@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/ehr/addehrnotebyvisit",
+  "title": "AMD action: addehrnotebyvisit",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "ehr",
+    "key": "addehrnotebyvisit",
+    "name": "addehrnotebyvisit",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "BETA EHR WRITE STUB: would create an EHR note scoped to a visit. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "visit_id",
+    "fields"
+  ],
+  "properties": {
+    "fields": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "template_id": {
+      "type": "string"
+    },
+    "visit_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/billing/savecharges",
+  "title": "AMD action: savecharges",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "billing",
+    "key": "savecharges",
+    "name": "savecharges",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would save a chargelist against a visit (voids existing charges on the visit per AMD semantics). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "visit_id",
+    "chargelist"
+  ],
+  "properties": {
+    "chargelist": {
+      "description": "Charges to save; opaque structural placeholder for the stub.",
+      "type": "array"
+    },
+    "force": {
+      "description": "1=allow duplicate charges on same DOS/provider/patient.",
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visit_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

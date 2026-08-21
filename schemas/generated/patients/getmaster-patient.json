@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getmaster-patient",
+  "title": "AMD action: getmaster-patient",
+  "x-amd-action": {
+    "class_": "patient",
+    "domain": "patients",
+    "key": "getmaster",
+    "name": "getmaster-patient",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Fetch one patient's master backend record by patient_id or chart_number. Returns top-level patient_id and found (boolean). The verbose AMD master payload is not surfaced in current handler output; this tool is a presence probe, not a full demographic extractor.",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

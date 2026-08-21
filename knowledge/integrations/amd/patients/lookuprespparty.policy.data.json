@@ -1,0 +1,87 @@
+{
+  "$schema": "amd-mcp-policy/v1.1",
+  "action": "lookuprespparty",
+  "domain": "patients",
+  "tier": 3,
+  "tool_name": "amd_patients_lookuprespparty",
+  "redact": {
+    "phi_fields": [
+      "first_name",
+      "firstname",
+      "last_name",
+      "lastname",
+      "middle_name",
+      "middlename",
+      "dob",
+      "date_of_birth",
+      "birthdate",
+      "ssn",
+      "social_security_number",
+      "address",
+      "address1",
+      "address2",
+      "city",
+      "zip",
+      "postal_code",
+      "phone_home",
+      "phone_cell",
+      "phone_work",
+      "phone",
+      "homephone",
+      "officephone",
+      "otherphone",
+      "email",
+      "patient_email",
+      "name",
+      "respparty_name",
+      "guarantor_firstname",
+      "guarantor_lastname",
+      "guarantor_dob",
+      "guarantor_ssn"
+    ],
+    "non_phi_keep": [
+      "patient_id",
+      "patientid",
+      "chart_number",
+      "chart",
+      "carrier_code",
+      "carrier_name",
+      "carrier_id",
+      "carrierid",
+      "provider_id",
+      "providerid",
+      "provider_name",
+      "rendering_provider_id",
+      "referring_provider_id",
+      "appointment_id",
+      "appointment_type",
+      "plan_type",
+      "place_of_service",
+      "profile_id",
+      "profileid",
+      "facility_id",
+      "facilityid",
+      "respparty_id",
+      "acct_type"
+    ],
+    "strict_mode_patterns": [
+      ".*_name$",
+      ".*_dob$",
+      ".*ssn.*"
+    ]
+  },
+  "permission": {
+    "audience": [
+      "front_desk",
+      "admin"
+    ]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": [
+    "lookuprespparty"
+  ]
+}

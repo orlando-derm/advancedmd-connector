@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/billing/newbatch",
+  "title": "AMD action: newbatch",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "billing",
+    "key": "newbatch",
+    "name": "newbatch",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would create a new billing batch (header for grouping charges/payments). Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "batch_name"
+  ],
+  "properties": {
+    "batch_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "batch_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "type": "string"
+    }
+  }
+}

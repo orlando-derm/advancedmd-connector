@@ -1,0 +1,161 @@
+---
+id: reference-amd-api-error-codes-data
+title: AMD error codes — code, handler, and observability status (queryable)
+access: [appointment-validator]
+authority: vendor
+source: "AdvancedMD API Documentation, May 2021, 'Error Codes' section + per-endpoint notes + 2026-05-17/18 production observations"
+last_updated: 2026-05-19
+update_requires: human_approval
+related: [reference-amd-api-error-codes]
+---
+{
+  "table": "amd-error-codes",
+  "description": "AMD fault codes the client may encounter. 'handler' tells AMDClient how to react. 'alt_code' is the equivalent 32-bit signed integer form for the same condition.",
+  "rows": [
+    {
+      "code": "1024",
+      "alt_code": "-2147220480",
+      "name": "Invalid username or password",
+      "type": "Client",
+      "category": "auth",
+      "handler": "fail-fast",
+      "documented_by": "vendor",
+      "notes": "Bad credentials. Fix .env."
+    },
+    {
+      "code": "1025",
+      "alt_code": "-2147220479",
+      "name": "Session has timed out",
+      "type": "Client",
+      "category": "auth",
+      "handler": "auto-relogin",
+      "documented_by": "vendor",
+      "notes": "Client should re-login and retry the call once."
+    },
+    {
+      "code": "1026",
+      "alt_code": null,
+      "name": "Invalid host IP address",
+      "type": "Client",
+      "category": "auth",
+      "handler": "fail-fast",
+      "documented_by": "vendor",
+      "notes": "Rare; IP-allowlist setups."
+    },
+    {
+      "code": "1027",
+      "alt_code": null,
+      "name": "Version mismatch",
+      "type": "Client",
+      "category": "auth",
+      "handler": "fail-fast",
+      "documented_by": "vendor"
+    },
+    {
+      "code": "2048",
+      "alt_code": null,
+      "name": "Missing attribute",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor",
+      "notes": "Caller bug; malformed request."
+    },
+    {
+      "code": "2049",
+      "alt_code": null,
+      "name": "Missing element",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor"
+    },
+    {
+      "code": "2050",
+      "alt_code": null,
+      "name": "Invalid element",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor"
+    },
+    {
+      "code": "2051",
+      "alt_code": null,
+      "name": "Invalid attribute",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor"
+    },
+    {
+      "code": "2052",
+      "alt_code": null,
+      "name": "Parsing error",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor"
+    },
+    {
+      "code": "2053",
+      "alt_code": null,
+      "name": "XML too large",
+      "type": "Server",
+      "category": "xml",
+      "handler": "fail-fast",
+      "documented_by": "vendor",
+      "notes": "May indicate need to switch to streaming endpoint."
+    },
+    {
+      "code": "-2147220476",
+      "alt_code": null,
+      "name": "Login redirect required",
+      "type": "Client",
+      "category": "auth",
+      "handler": "redirect",
+      "documented_by": "vendor",
+      "notes": "Special-cased in AMDClient.login(); not an error path."
+    },
+    {
+      "code": "-2147220449",
+      "alt_code": null,
+      "name": "Account expired",
+      "type": "Client",
+      "category": "auth",
+      "handler": "fail-fast",
+      "documented_by": "observed",
+      "notes": "Observed 2026-05-17. Not in central error table. Admin must reactivate."
+    },
+    {
+      "code": "-2147220474",
+      "alt_code": null,
+      "name": "Account locked (too many failed logins)",
+      "type": "Client",
+      "category": "auth",
+      "handler": "fail-fast",
+      "documented_by": "observed",
+      "notes": "Observed 2026-05-18. Retrying makes the lockout worse — never auto-retry."
+    },
+    {
+      "code": "-2147217350",
+      "alt_code": null,
+      "name": "Result set exceeded 1000 records",
+      "type": "Server",
+      "category": "overflow",
+      "handler": "chunked-pagination",
+      "documented_by": "vendor",
+      "notes": "Currently NOT handled in client.py; deferred per 2026-05-17-1000-record-cliff-deferred.txt."
+    },
+    {
+      "code": "-2147217398",
+      "alt_code": null,
+      "name": "Concurrent update",
+      "type": "Server",
+      "category": "write",
+      "handler": "n/a",
+      "documented_by": "vendor",
+      "notes": "Only relevant for write endpoints; validator is read-only."
+    }
+  ]
+}

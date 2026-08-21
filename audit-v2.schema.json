@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp-audit/v2",
+  "title": "AMD MCP audit log v2 record",
+  "description": "One JSONL line per tool call. Queryable via jq + grep across all per-domain server log files.",
+  "type": "object",
+  "required": [
+    "schema_version", "ts", "call_id", "domain", "server_name",
+    "tool", "action", "office_key", "tier", "args_redacted",
+    "phi_fields_revealed", "outcome", "duration_ms", "rate_limit_peak"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "amd-mcp-audit/v2"},
+    "ts": {"type": "string", "format": "date-time"},
+    "call_id": {"type": "string", "pattern": "^[0-9a-f]{8,}$"},
+    "domain": {"type": "string"},
+    "server_name": {"type": "string"},
+    "tool": {"type": "string"},
+    "action": {"type": "string"},
+    "office_key": {"type": "string"},
+    "tier": {"type": "integer", "enum": [1, 2, 3]},
+    "args_redacted": {"type": "object"},
+    "phi_fields_revealed": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "ok", "rate_limit", "auth", "amd_fault",
+        "write_blocked", "bad_input", "unknown_tool"
+      ]
+    },
+    "duration_ms": {"type": ["integer", "null"], "minimum": 0},
+    "rate_limit_peak": {"type": ["boolean", "null"]}
+  },
+  "additionalProperties": false
+}

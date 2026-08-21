@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getreminderappts",
+  "title": "AMD action: getreminderappts",
+  "x-amd-action": {
+    "domain": "patients",
+    "key": "getreminderappts",
+    "name": "getreminderappts",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List appointment-reminder rows for a date range (optionally one patient_id). Returns start_date, end_date, count, by_remindertype, by_provider, by_provider_id, and an appts list. appts rows: appointment_id, appointment_datetime, remindertype, provider_id, provider_name, patient_id, patient_name, phone_cell. remindertype and appointment_datetime give the visit type and start time even when the schedule-grid sibling reports them blank.",
+  "type": "object",
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "properties": {
+    "end_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start_date": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date"
+    }
+  }
+}

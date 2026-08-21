@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/providers/lookuprefprovider",
+  "title": "AMD action: lookuprefprovider",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "providers",
+    "key": "lookuprefprovider",
+    "name": "lookuprefprovider",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search referring-provider records by name fragment. Returns query, count, matches, and narrow_query. matches rows: refprovider_id, name, code, specialty, practicename. Matches capped at 5. refprovider_id is the value addreferral and updatereferral expect.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

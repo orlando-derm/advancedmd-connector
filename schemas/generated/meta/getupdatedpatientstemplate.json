@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/meta/getupdatedpatientstemplate",
+  "title": "AMD action: getupdatedpatientstemplate",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "meta",
+    "key": "getupdatedpatientstemplate",
+    "name": "getupdatedpatientstemplate",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "META HELPER (DUO-1: tool_name=null, suppressed from list_tools): returns the static schema metadata for getupdatedpatients. Used by schema_gen and tests, never invoked by Adam.",
+  "type": "object",
+  "properties": {}
+}

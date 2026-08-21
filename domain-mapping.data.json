@@ -1,0 +1,115 @@
+{
+  "$schema": "amd-mcp-domain-mapping/v1",
+  "version": "2026-06-04",
+  "note": "Action -> domain mapping for the schema generator. After F1 returned UNUSABLE on WSDL discovery, domains are derived from the curated action-catalog.data.json plus the legacy server's existing tools. New domains/actions are added as they're catalogued. 2026-06-04: added 4 domains (ehr, masterfiles, system, meta) per AMD_TOOLS_FULL_BUILDOUT_PLAN-final.txt MERGED-E0.3.",
+  "mapping": {
+    "patients": [
+      "getdemographic",
+      "getupdatedpatients",
+      "lookup-patient",
+      "getmaster-patient",
+      "getpatientvisits",
+      "getreminderappts",
+      "savedemographic",
+      "upddemographic",
+      "getcustomdata",
+      "getreminderpatientbirthdays",
+      "lookuprespparty",
+      "addpatient",
+      "updatepatient",
+      "addinsurance",
+      "updateinsurance",
+      "savepatientnotes",
+      "addrespparty",
+      "addreferral",
+      "updatereferral",
+      "uploadfile"
+    ],
+    "visits": [
+      "getdatevisits",
+      "getupdatedvisits",
+      "getreminderrecallvisits",
+      "addvisit"
+    ],
+    "providers": [
+      "lookup-provider",
+      "getupdatedproviders",
+      "getupdatedreferringproviders",
+      "lookupprovider",
+      "lookupprofile",
+      "lookuprefprovider"
+    ],
+    "billing": [
+      "getchargedetaildata",
+      "savecharges",
+      "updvisitwithnewcharges",
+      "newbatch"
+    ],
+    "payments": [
+      "gettxhistory",
+      "addpayments"
+    ],
+    "codes": [
+      "lookup-cpt",
+      "lookup-icd10",
+      "lookup-hcpcs",
+      "lookup-modcode",
+      "lookupproccode",
+      "lookupdiagcode",
+      "lookupmodcode"
+    ],
+    "ehr": [
+      "getehrallergies",
+      "getehrhwplans",
+      "getehrimmunizations",
+      "getehrmedications",
+      "getehrprofiles",
+      "getehrproblems",
+      "getehrtemplates",
+      "getehrlabresults",
+      "getehrnotes",
+      "getehrnotesbyvisit",
+      "getehrupdatednotes",
+      "getehrccdadata",
+      "getehrccdadocument",
+      "addehrnote",
+      "addehrnotebyvisit",
+      "updateehrnote",
+      "addehrproblem",
+      "updateehrproblem",
+      "addehrhwplans",
+      "updateehrhwplans",
+      "saveehrccdadata",
+      "saveehrccdadocument"
+    ],
+    "masterfiles": [
+      "lookupcarrier",
+      "lookupfinclass",
+      "lookupaccttype",
+      "lookupzipcode",
+      "lookupnotetypes",
+      "selectfacilities",
+      "selectdiagnosiscodes",
+      "selectuserfiletemplates",
+      "savenotetypes"
+    ],
+    "system": [
+      "getsysdefaults"
+    ],
+    "meta": [
+      "getupdatedpatientstemplate",
+      "getfieldsets",
+      "getupdatedvisitstemplate",
+      "getupdatedproviderstemplate",
+      "getehrhwplanstemplate",
+      "getehrimmunizationstemplate",
+      "getehrlabresultstemplate",
+      "getehrmedicationstemplate",
+      "getehrnotestemplate",
+      "getehrproblemstemplate",
+      "getehrtemplatestemplate",
+      "getehrallergiestemplate"
+    ]
+  },
+  "unmappable_actions": []
+}

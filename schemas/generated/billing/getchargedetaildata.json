@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/billing/getchargedetaildata",
+  "title": "AMD action: getchargedetaildata",
+  "x-amd-action": {
+    "class_": "demographics",
+    "domain": "billing",
+    "key": "getchargedetaildata",
+    "name": "getchargedetaildata",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "Fetch the detail envelope for ONE specific charge_id (visit context + status flags). Use when a charge needs to be inspected for void/billed/paymentplan status. Financial amounts (fee, paid, balances) are REDACTED \u2014 they do not appear in this tool's output. For a patient's full financial history use gettxhistory.",
+  "type": "object",
+  "required": [
+    "charge_id"
+  ],
+  "properties": {
+    "charge_id": {
+      "description": "AMD charge ID.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "amd-mcp-policy/v1",
+  "action": "getmaster-patient",
+  "domain": "patients",
+  "tier": 3,
+  "tool_name": "amd_patients_get_master",
+  "redact": {
+    "phi_fields": [
+      "first_name", "firstname", "last_name", "lastname",
+      "dob", "date_of_birth", "ssn",
+      "address", "address1", "phone_home", "phone_cell", "email"
+    ],
+    "non_phi_keep": ["patient_id", "chart_number", "provider_id"],
+    "strict_mode_patterns": [".*_name$", ".*phone$"]
+  },
+  "permission": {
+    "audience": ["admin"]
+  },
+  "audit": {
+    "always_log": false,
+    "log_when_phi_revealed": true
+  },
+  "write_action": false,
+  "permitted_actions": [["getmaster", {"class_": ["patient"]}]]
+}

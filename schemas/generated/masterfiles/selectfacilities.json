@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/selectfacilities",
+  "title": "AMD action: selectfacilities",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "masterfiles",
+    "key": "selectfacilities",
+    "name": "selectfacilities",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "List all facility master records. Returns count + facilities with id, code, name, address. Master data, not PHI.",
+  "type": "object",
+  "properties": {
+    "active_only": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/masterfiles/lookupcarrier",
+  "title": "AMD action: lookupcarrier",
+  "x-amd-action": {
+    "class_": "lookup",
+    "domain": "masterfiles",
+    "key": "lookupcarrier",
+    "name": "lookupcarrier",
+    "phi_touching": true,
+    "tier": 3,
+    "write": false
+  },
+  "description": "Search insurance carriers in the practice master file by query. Returns count + matches with carrier_id, carrier_code, carrier_name. Public master data.",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subtype": {
+      "description": "Optional carrier subtype filter.",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/visits/addvisit",
+  "title": "AMD action: addvisit",
+  "x-amd-action": {
+    "class_": "chargeentry",
+    "domain": "visits",
+    "key": "addvisit",
+    "name": "addvisit",
+    "phi_touching": true,
+    "tier": 2,
+    "write": true
+  },
+  "description": "WRITE STUB: would add a visit for a patient with a given provider profile. Hidden by WRITE_TOOLS_ENABLED=False.",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "profile_id"
+  ],
+  "properties": {
+    "date": {
+      "description": "Visit date; empty string defaults to today.",
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "AMD patient_id.",
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "description": "Provider profile ID.",
+      "type": "string",
+      "minLength": 1
+    },
+    "refplan_id": {
+      "description": "Optional referral plan ID to link.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

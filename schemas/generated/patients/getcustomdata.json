@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/patients/getcustomdata",
+  "title": "AMD action: getcustomdata",
+  "x-amd-action": {
+    "class_": "providerdesktop",
+    "domain": "patients",
+    "key": "getcustomdata",
+    "name": "getcustomdata",
+    "phi_touching": true,
+    "tier": 2,
+    "write": false
+  },
+  "description": "Fetch one patient's custom-tab data (practice-defined custom fields keyed by tab and section). Returns patient_id and found (boolean). Custom field set varies by practice and is not enumerable here; PHI redaction default ON (value, valuecode, valuename redacted).",
+  "type": "object",
+  "required": [
+    "patient_id"
+  ],
+  "properties": {
+    "includeindemographics": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ],
+      "default": 0
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "amd-mcp/schemas/providers/getupdatedreferringproviders",
+  "title": "AMD action: getupdatedreferringproviders",
+  "x-amd-action": {
+    "class_": "api",
+    "domain": "providers",
+    "key": "getupdatedreferringproviders",
+    "name": "getupdatedreferringproviders",
+    "phi_touching": true,
+    "tier": 1,
+    "write": false
+  },
+  "description": "List referring providers (external doctors who refer into this practice) added or modified since an ISO 8601 since timestamp. Empty since returns the full referring-provider roster (bootstrap pull). Returns since, full_pull, count, by_specialty, and a refproviders list. refproviders rows: refprovider_id, name, code, specialty, practicename. Off-peak Tier 1.",
+  "type": "object",
+  "properties": {
+    "since": {
+      "description": "Saved servertime; if empty, AMD returns all referring providers. Omit or pass empty string for bootstrap full-pull.",
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
