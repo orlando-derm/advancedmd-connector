@@ -70,6 +70,7 @@ def make_entry(
     *,
     handler: Any = None,
     verified: bool = True,
+    served: bool | None = None,
     write_action: bool = False,
     schema: dict | None = None,
 ) -> RegistryEntry:
@@ -86,6 +87,7 @@ def make_entry(
         write_action=write_action,
         tier=2,
         verified=verified,
+        served=served,
         aliases=("getdemographic",) if name.endswith("get_demographic") else (),
     )
 
@@ -231,6 +233,53 @@ async def test_unknown_tool(make_record, token_table, fake_clock, entry_queue):
     assert isinstance(await slot_error(record), ToolUnknown)
     assert clients == []
     assert auditor.lines[0]["outcome"] == "tool_unknown"
+
+
+async def test_a_pending_live_check_tool_is_refused_in_production_mode(
+    make_record, token_table, fake_clock, entry_queue
+):
+    """SPEC 9.2/9.3: a ledger row whose live check is pending is not served.
+
+    CONNECTOR_SERVE_PENDING_VERIFICATION is false in production, so the
+    registry marks the entry served=False and the handler never runs.
+    """
+    ran: list[str] = []
+
+    async def handler(**_: Any) -> dict:
+        ran.append("handler")
+        return {}
+
+    entry = make_entry("amd_patients_get_demographic", handler=handler,
+                       verified=False, served=False)
+    worker, auditor, clients = build_worker(
+        [entry], token_table, fake_clock=fake_clock, entry_queue=entry_queue,
+    )
+    record = make_record("amd_patients_get_demographic")
+
+    await worker.process(record)
+
+    assert isinstance(await slot_error(record), ToolUnverified)
+    assert ran == []
+    assert auditor.lines[0]["amd_calls"] == 0
+
+
+async def test_a_pending_live_check_tool_runs_when_serving_pending(
+    make_record, token_table, fake_clock, entry_queue
+):
+    """SPEC 19 CONNECTOR_SERVE_PENDING_VERIFICATION=true serves it anyway."""
+    entry = make_entry("amd_patients_get_demographic", verified=False,
+                       served=True)
+    worker, auditor, clients = build_worker(
+        [entry], token_table, fake_clock=fake_clock,
+        redactor=lambda r: r, entry_queue=entry_queue,
+    )
+    record = make_record("amd_patients_get_demographic",
+                         args={"patient_id": "900001"})
+
+    await worker.process(record)
+
+    assert record.slot.result()["ok"] is True
+    assert auditor.lines[0]["outcome"] == "ok"
 
 
 async def test_unverified_tool_spends_no_amd_calls(

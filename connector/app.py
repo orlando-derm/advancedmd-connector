@@ -236,6 +236,7 @@ def create_app(deps: Deps, *, lifecycle: Lifecycle | None = None) -> FastAPI:
                               for k, v in deps.clock.snapshot().items()},
                 },
                 "registry": life.registry_counts(),
+                "serving_pending_verification": life.serving_pending_verification(),
             }
         )
 

@@ -13,7 +13,7 @@ import pytest
 from lxml import etree
 
 from connector.clock import LOGIN_TIER, RateClock
-from connector.errors import AmdUnavailable, SessionFailed
+from connector.errors import AmdUnavailable, LoginBucketWait, SessionFailed
 from connector.session import (
     DEFAULT_AMD_BASE_URL,
     REDIRECT_PATH,
@@ -518,3 +518,113 @@ async def test_the_cache_holds_no_plaintext_password(config):
     await checker.check("staff-user", "staff-password")
     assert "staff-password" not in str(checker._cache)
     assert "staff-user" not in str(checker._cache)
+
+
+# ------------------------------------ SPEC 11.2 wait=false (login bucket)
+
+
+def real_clock_checker(config, ticker: dict, slept: list):
+    """A REAL LoginChecker over a REAL RateClock, with time injected.
+
+    Nothing here is a stand-in for the code under test: the login bucket
+    is the production one, and only the time source and the sleep are
+    replaced so the suite never waits a real minute.
+    """
+    async def sleep(seconds: float) -> None:
+        slept.append(seconds)
+        ticker["t"] += seconds
+
+    clock = RateClock(
+        office_key="PLACEHOLDER",
+        monotonic=lambda: ticker["t"],
+        sleep=sleep,
+        load_state=False,
+    )
+    made: list[dict] = []
+
+    class BucketedThrowaway(FakeThrowaway):
+        """Takes a login slot the way AmdSession's _OneLoginSlot does."""
+
+        async def login(self, force: bool = False) -> None:
+            await clock.acquire(LOGIN_TIER)
+            await super().login(force=force)
+
+    def factory(**kwargs):
+        made.append(kwargs)
+        return BucketedThrowaway()
+
+    checker = LoginChecker(config, clock, session_factory=factory)
+    return checker, clock, made
+
+
+async def test_wait_false_with_a_full_login_bucket_raises_login_bucket_wait(config):
+    """SPEC 11.2 / 14: the only way login_bucket_wait is produced."""
+    ticker = {"t": 1000.0}
+    slept: list[float] = []
+    checker, clock, made = real_clock_checker(config, ticker, slept)
+
+    # Fill the 1-per-minute login bucket the way a login does.
+    await clock.acquire(LOGIN_TIER)
+
+    with pytest.raises(LoginBucketWait) as excinfo:
+        await checker.check("staff-user", "staff-password", wait=False)
+
+    err = excinfo.value
+    assert err.code == "login_bucket_wait"
+    assert err.http_status == 503
+    assert err.retryable is True
+    assert 0 < err.retry_after_ms <= 60_000
+    assert err.to_dict()["retry_after_ms"] == err.retry_after_ms
+    # No slot consumed, no session built, no sleep: AMD was never involved.
+    assert made == []
+    assert slept == []
+    assert clock.snapshot()[LOGIN_TIER]["used"] == 1
+
+
+async def test_wait_false_with_a_free_login_bucket_still_checks(config):
+    ticker = {"t": 1000.0}
+    slept: list[float] = []
+    checker, clock, made = real_clock_checker(config, ticker, slept)
+
+    assert await checker.check("staff-user", "staff-password", wait=False) is True
+    assert len(made) == 1
+
+
+async def test_wait_false_answers_from_the_cache_without_a_slot(config):
+    """A cached check needs no login slot, so a full bucket cannot block it."""
+    ticker = {"t": 1000.0}
+    slept: list[float] = []
+    checker, clock, made = real_clock_checker(config, ticker, slept)
+
+    assert await checker.check("staff-user", "staff-password") is True
+    await clock.acquire(LOGIN_TIER)
+
+    assert await checker.check("staff-user", "staff-password", wait=False) is True
+    assert len(made) == 1
+
+
+async def test_wait_true_is_the_default_and_still_waits(config):
+    """The default is unchanged: block on the bucket, never raise."""
+    ticker = {"t": 1000.0}
+    slept: list[float] = []
+    checker, clock, made = real_clock_checker(config, ticker, slept)
+
+    await clock.acquire(LOGIN_TIER)
+
+    assert await checker.check("staff-user", "staff-password") is True
+    assert slept and sum(slept) > 0
+    assert len(made) == 1
+
+
+async def test_next_free_ms_reports_zero_while_the_bucket_has_room(config):
+    ticker = {"t": 1000.0}
+    slept: list[float] = []
+    _checker, clock, _made = real_clock_checker(config, ticker, slept)
+
+    assert clock.next_free_ms(LOGIN_TIER) == 0
+    await clock.acquire(LOGIN_TIER)
+    assert clock.next_free_ms(LOGIN_TIER) > 0
+    # The estimate consumed nothing.
+    assert clock.snapshot()[LOGIN_TIER]["used"] == 1
+    ticker["t"] += 61
+    assert clock.next_free_ms(LOGIN_TIER) == 0

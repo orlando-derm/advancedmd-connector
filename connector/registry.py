@@ -196,7 +196,13 @@ def _entry_from_spec(
 ) -> RegistryEntry:
     name = spec.tool.name
     row = verification.get(name)
-    verified = row is not None
+    # SPEC 9.2/9.3: a ledger row is not verification. verified is True
+    # only when all five checklist items are recorded, the operator live
+    # check included. `served` is what the worker gates on and may be
+    # True for a live-check-only gap under
+    # CONNECTOR_SERVE_PENDING_VERIFICATION (SPEC 19).
+    verified = verification.is_verified(name)
+    served = verification.is_served(name)
     # The wire action, not the catalog key: lookup-patient's policy key
     # differs from its AMD action (lookuppatient), and the alias plus the
     # tier must both follow the wire spelling.
@@ -209,6 +215,8 @@ def _entry_from_spec(
         write_action=bool(spec.write_action),
         tier=tier_for(action),
         verified=verified,
+        served=served,
+        checklist=dict(row.checklist) if row is not None else None,
         verified_at=row.verified_at if row is not None else None,
         verification_ref=row.verification_ref if row is not None else None,
         aliases=(row.alias,) if row is not None and row.alias != name else (),

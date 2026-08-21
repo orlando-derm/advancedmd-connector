@@ -17,6 +17,14 @@ success="1" -- is by construction NOT something this build can perform:
 no process here may contact AdvancedMD. Each row therefore carries
 live_check=PENDING_OPERATOR and `LIVE_CHECK_PENDING` is True for the
 whole table. That is recorded honestly rather than claimed.
+
+A row is therefore NOT verified: is_verified() requires all five items,
+the live check included, so no Appendix A tool is verified in this repo
+until the operator records a date (docs/OPERATIONS.md). is_served()
+answers the separate question of whether the worker may run the handler:
+the same thing, unless CONNECTOR_SERVE_PENDING_VERIFICATION (SPEC 19) is
+true, in which case a row whose ONLY gap is the live check is served and
+/health reports the posture as degraded.
 """
 from __future__ import annotations
 
@@ -24,6 +32,7 @@ from dataclasses import dataclass
 from typing import Mapping
 
 __all__ = [
+    "PENDING",
     "PENDING_OPERATOR",
     "LIVE_CHECK_PENDING",
     "VerifiedTool",
@@ -36,6 +45,10 @@ __all__ = [
 #: SPEC 9.3 step 2 is the operator's live check on black-sky. It is not
 #: done, and no agent may do it. Never rewrite this to a date from here.
 PENDING_OPERATOR = "PENDING OPERATOR"
+
+#: The wire spelling of a checklist item that is not yet recorded, as it
+#: appears in GET /v1/tools (SPEC 11.3).
+PENDING = "pending"
 
 #: True while any row still has live_check == PENDING_OPERATOR.
 LIVE_CHECK_PENDING = True
@@ -63,7 +76,47 @@ class VerifiedTool:
     fixture: str
     #: SPEC 9.3 step 2. Always PENDING_OPERATOR in this repo.
     live_check: str = PENDING_OPERATOR
+    #: SPEC 9.3 step 5: Appendix C defects affecting this tool are fixed.
+    defects_fixed: bool = True
     write_action: bool = False
+
+    @property
+    def live_check_pending(self) -> bool:
+        """SPEC 9.3 step 2 is not recorded for this row."""
+        return self.live_check == PENDING_OPERATOR
+
+    @property
+    def checklist(self) -> Mapping[str, str]:
+        """The SPEC 9.3 five, as recorded here. "pending" means missing.
+
+        Items 1, 3, 4 and 5 are recorded in this repo (request map from
+        the reference clients, synthetic fixture plus an Appendix B
+        assertion, tier table, Appendix C defects). Item 2 is the
+        operator's live check and is "pending" until a date is written
+        into the row.
+        """
+        return {
+            "request_map": self.verification_ref or PENDING,
+            "live_check": PENDING if self.live_check_pending else self.live_check,
+            "fixture": self.fixture or PENDING,
+            "tier": str(self.tier) if self.tier else PENDING,
+            "defects": "fixed" if self.defects_fixed else PENDING,
+        }
+
+    @property
+    def missing_items(self) -> tuple[str, ...]:
+        """Checklist items not yet recorded, in SPEC 9.3 order."""
+        return tuple(k for k, v in self.checklist.items() if v == PENDING)
+
+    @property
+    def checklist_complete(self) -> bool:
+        """SPEC 9.2 verified: all five SPEC 9.3 items recorded."""
+        return not self.missing_items
+
+    @property
+    def live_check_is_only_gap(self) -> bool:
+        """Everything but the operator's live check is recorded."""
+        return self.missing_items == ("live_check",)
 
     @property
     def verified_at(self) -> str | None:
@@ -128,7 +181,18 @@ APPENDIX_A: tuple[str, ...] = tuple(LAUNCH_SET)
 class VerificationTable:
     """Lookup of verification state by canonical name or by alias."""
 
-    def __init__(self, rows: Mapping[str, VerifiedTool] | None = None) -> None:
+    def __init__(
+        self,
+        rows: Mapping[str, VerifiedTool] | None = None,
+        *,
+        serve_pending: bool = False,
+    ) -> None:
+        #: SPEC 19 CONNECTOR_SERVE_PENDING_VERIFICATION. False in
+        #: production: a row whose only gap is the operator live check is
+        #: NOT served and the worker answers tool_unverified. True lets
+        #: the connector be exercised end to end before the operator runs
+        #: the live check, and /health says so.
+        self.serve_pending = bool(serve_pending)
         self._by_name: dict[str, VerifiedTool] = dict(
             LAUNCH_SET if rows is None else rows
         )
@@ -146,8 +210,33 @@ class VerificationTable:
         return row
 
     def is_verified(self, name: str) -> bool:
-        """SPEC 9.2: verified tools are served, everything else is not."""
-        return self.get(name) is not None
+        """SPEC 9.2/9.3: verified means all five checklist items recorded.
+
+        A ledger row is not by itself verification: while its live_check
+        is PENDING_OPERATOR the SPEC 9.3 checklist is incomplete and this
+        returns False.
+        """
+        row = self.get(name)
+        return row is not None and row.checklist_complete
+
+    def is_served(self, name: str) -> bool:
+        """Whether the worker may run this tool's handler.
+
+        Verified tools always. Tools whose ONLY missing item is the
+        operator live check, when CONNECTOR_SERVE_PENDING_VERIFICATION is
+        true. Nothing else.
+        """
+        row = self.get(name)
+        if row is None:
+            return False
+        if row.checklist_complete:
+            return True
+        return self.serve_pending and row.live_check_is_only_gap
+
+    def checklist_for(self, name: str) -> Mapping[str, str] | None:
+        """The SPEC 9.3 checklist as GET /v1/tools reports it."""
+        row = self.get(name)
+        return None if row is None else row.checklist
 
     def aliases_for(self, name: str) -> tuple[str, ...]:
         row = self._by_name.get(name)
@@ -169,5 +258,5 @@ class VerificationTable:
         )
 
 
-def default_table() -> VerificationTable:
-    return VerificationTable()
+def default_table(*, serve_pending: bool = False) -> VerificationTable:
+    return VerificationTable(serve_pending=serve_pending)

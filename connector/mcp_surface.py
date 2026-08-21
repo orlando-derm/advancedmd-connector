@@ -47,8 +47,10 @@ from connector.errors import (
     Unauthorized,
 )
 from connector.interfaces import Caller, Registry, RegistryEntry, TokenTable
+from connector.verification import PENDING
 
 __all__ = [
+    "verification_view",
     "DOMAINS",
     "MCP_PROTOCOL_VERSION",
     "SERVER_NAME",
@@ -246,10 +248,30 @@ def tool_row(entry: RegistryEntry) -> dict[str, Any]:
         "aliases": list(entry.aliases),
         "domain": entry.domain,
         "verified": bool(entry.verified),
+        "served": bool(entry.is_served),
+        "verification": verification_view(entry),
         "write": bool(entry.write_action),
         "tier": entry.tier,
         "schema": schema,
         "description": schema.get("description", ""),
+    }
+
+
+def verification_view(entry: RegistryEntry) -> dict[str, str]:
+    """The per-tool SPEC 9.3 checklist for GET /v1/tools (SPEC 11.3).
+
+    Each item is either "pending" or what was recorded -- for the live
+    check, the operator's date. A tool with no ledger row reports every
+    item pending. No AMD content, no bodies: names and dates only.
+    """
+    if entry.checklist is not None:
+        return {k: str(v) for k, v in entry.checklist.items()}
+    return {
+        "request_map": PENDING,
+        "live_check": PENDING,
+        "fixture": PENDING,
+        "tier": PENDING,
+        "defects": PENDING,
     }
 
 
@@ -476,7 +498,7 @@ class _Surface:
             raise ToolUnknown()
         if not self.tokens.allows(caller, entry):
             raise ToolForbidden()
-        if not entry.verified:
+        if not entry.is_served:
             raise ToolUnverified()
 
         envelope = await self.route_to_receiver(

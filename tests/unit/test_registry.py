@@ -6,6 +6,8 @@ a handler module goes missing, this is where it shows up.
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from connector.interfaces import Caller, RegistryEntry
@@ -39,14 +41,51 @@ def test_all_nine_domains_are_registered(registry):
     assert len(DOMAIN_PACKAGES) == 9
 
 
-def test_every_appendix_a_tool_is_present_and_verified(registry):
-    """SPEC 9.4: the launch set is served; everything else is not."""
+def test_every_appendix_a_tool_is_present_but_not_yet_verified(registry):
+    """SPEC 9.2/9.3: a ledger row alone is not verification.
+
+    Every Appendix A tool is registered, and every one of them is still
+    unverified because SPEC 9.3 step 2, the operator's live check, is
+    PENDING OPERATOR. The old behaviour -- verified purely because a row
+    existed -- bypassed the verified-or-refused gate.
+    """
     for name in APPENDIX_A:
         entry = registry.get(name)
         assert entry is not None, name
-        assert entry.verified is True, name
+        assert entry.verified is False, name
+        assert entry.is_served is False, name
+        assert entry.checklist["live_check"] == "pending", name
 
-    assert set(registry.verified_names()) == set(APPENDIX_A)
+    assert registry.verified_names() == []
+
+
+def test_appendix_a_is_served_when_only_the_live_check_is_missing():
+    """SPEC 19 CONNECTOR_SERVE_PENDING_VERIFICATION, the testing posture."""
+    registry = build_registry(verification=VerificationTable(serve_pending=True))
+
+    for name in APPENDIX_A:
+        entry = registry.get(name)
+        # Still honestly unverified -- but served, so the connector can be
+        # exercised end to end before the operator runs the live check.
+        assert entry.verified is False, name
+        assert entry.is_served is True, name
+
+    # Nothing outside the launch set is promoted by the flag.
+    others = [e for e in registry if e.name not in set(APPENDIX_A)]
+    assert others and all(e.is_served is False for e in others)
+
+
+def test_a_recorded_live_check_verifies_the_row():
+    """The operator writes a date into the ledger row; then it verifies."""
+    row = LAUNCH_SET["amd_patients_get_demographic"]
+    done = replace(row, live_check="2026-09-01")
+
+    assert done.checklist_complete is True
+    assert done.missing_items == ()
+    assert done.verified_at == "2026-09-01"
+    table = VerificationTable({done.name: done})
+    assert table.is_verified(done.name) is True
+    assert table.is_served(done.name) is True
 
 
 def test_a_missing_appendix_a_tool_fails_the_build(monkeypatch):
@@ -100,9 +139,13 @@ def test_unverified_tools_are_still_listed(registry):
     """SPEC 9.2: agents can see a tool exists before it is promoted."""
     unverified = [e for e in registry if not e.verified]
 
-    assert len(unverified) > 0
-    assert len(registry) == len(unverified) + len(APPENDIX_A)
-    assert all(e.verification_ref is None for e in unverified)
+    # Every tool is unverified while the live check is pending, Appendix A
+    # included; all of them are still listed.
+    assert len(unverified) == len(registry)
+    no_row = [e for e in registry if e.name not in set(APPENDIX_A)]
+    assert len(no_row) > 0
+    assert all(e.verification_ref is None for e in no_row)
+    assert all(e.checklist is None for e in no_row)
 
 
 def test_verified_at_stays_none_while_the_live_check_is_pending():
@@ -176,7 +219,9 @@ def test_write_tools_are_registered_but_flagged(registry):
     upload = registry.get("amd_patients_uploadfile")
 
     assert upload.write_action is True
-    assert upload.verified is True
+    # Registered and flagged, but not verified: the live check is pending.
+    assert upload.verified is False
+    assert upload.checklist["live_check"] == "pending"
     assert len([e for e in registry if e.write_action]) > 1
 
 

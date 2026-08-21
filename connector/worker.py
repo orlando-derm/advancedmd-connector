@@ -167,7 +167,7 @@ class Worker:
         if entry is None:
             self._fail(record, ToolUnknown(), waited_ms=waited_ms)
             return
-        if not entry.verified:
+        if not entry.is_served:
             # SPEC 9.2: no handler runs, no AMD call is spent.
             self._fail(record, ToolUnverified(), waited_ms=waited_ms, entry=entry)
             return

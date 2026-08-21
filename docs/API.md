@@ -55,11 +55,19 @@ anywhere but AdvancedMD's login endpoint.
 
 ```json
 {"tools": [{"name": "getdemographic", "domain": "patients", "verified": true,
+            "served": true,
+            "verification": {"request_map": "…", "live_check": "pending",
+                             "fixture": "…", "tier": "2", "defects": "fixed"},
             "write": false, "tier": 2, "schema": {"...": "..."},
             "description": "…"}],
  "version": "1.0.0"}
 ```
-Filtered to the caller's tools allowlist. `name` is the canonical
+Filtered to the caller's tools allowlist. `verified` is true only when
+all five SPEC 9.3 checklist items are recorded; `verification` reports
+them one by one, each either `"pending"` or what was recorded (for the
+live check, the operator's date). `served` says whether the worker will
+run the handler -- the same as `verified`, unless
+`CONNECTOR_SERVE_PENDING_VERIFICATION` is on (SPEC 9.3, 19). `name` is the canonical
 registry key; bare AMD action-name aliases (Amendment A1) resolve to the
 same entry but are not separately listed here.
 
@@ -77,11 +85,13 @@ No token; internal network only.
                                    "2": {"used": 4, "limit": 10},
                                    "3": {"used": 0, "limit": 21},
                                    "login": {"used": 1, "limit": 1}}},
- "registry": {"verified": 10, "unverified": 64}}
+ "registry": {"verified": 10, "unverified": 64},
+ "serving_pending_verification": false}
 ```
 `status` is one of `"ok"`, `"degraded"`, or `"starting"`. It is
-`"degraded"` when the session is degraded or a queue is over 80% of its
-cap, and `"starting"` until the first login attempt has completed.
+`"degraded"` when the session is degraded, a queue is over 80% of its
+cap, or `serving_pending_verification` is true, and `"starting"` until
+the first login attempt has completed.
 
 ## 11.5 GET /metrics
 

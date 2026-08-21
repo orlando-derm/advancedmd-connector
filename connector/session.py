@@ -27,7 +27,12 @@ from lxml import etree
 
 from connector.clock import LOGIN_TIER
 from connector.config import Config
-from connector.errors import AmdUnavailable, ConnectorError, SessionFailed
+from connector.errors import (
+    AmdUnavailable,
+    ConnectorError,
+    LoginBucketWait,
+    SessionFailed,
+)
 from connector.sender import (
     AMD_XML_ENCODING,
     REDIRECT_FAULT_CODE,
@@ -389,13 +394,27 @@ class LoginChecker:
             return False
         return True
 
-    async def check(self, username: str, password: str, office_key: str | None = None) -> bool:
+    async def check(
+        self,
+        username: str,
+        password: str,
+        office_key: str | None = None,
+        *,
+        wait: bool = True,
+    ) -> bool:
         """True when AMD accepts these credentials.
 
         Returns False on refusal rather than raising, so the route answers
         "not ok" without leaking which of the three fields was wrong.
         Raises AmdUnavailable when AMD could not be reached at all -- a
         different answer from "your password is wrong".
+
+        SPEC 11.2: `wait` defaults to True and the check then blocks on
+        the 1/min login bucket as before. With wait=False and the bucket
+        already full, LoginBucketWait is raised carrying the clock's
+        next-free estimate -- no slot is consumed and AMD is not
+        contacted. A cached check still answers immediately either way,
+        because it needs no login slot at all.
         """
         office = office_key or self.config.amd_office_key
         key = login_cache_key(username, office, password)
@@ -403,6 +422,11 @@ class LoginChecker:
             self.hits += 1
             return True
         self.misses += 1
+
+        if not wait:
+            retry_after_ms = self.clock.next_free_ms(LOGIN_TIER)
+            if retry_after_ms > 0:
+                raise LoginBucketWait(retry_after_ms)
 
         session = self._session_factory(
             username=username, password=password, office_key=office

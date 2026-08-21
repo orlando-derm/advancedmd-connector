@@ -497,6 +497,22 @@ docs/TOOL_TO_XML_MAP.md under its entry:
 4. Tier confirmed in the tier table.
 5. Defects from Appendix C that affect this tool are fixed.
 
+A tool with a ledger entry but an incomplete checklist is NOT verified.
+In particular, while step 2 is still PENDING OPERATOR the tool reports
+verified:false and returns tool_unverified.
+
+CONNECTOR_SERVE_PENDING_VERIFICATION (section 19, default false) is the
+one documented exception, for testing before the operator runs the live
+check: when true, a tool whose ONLY missing checklist item is step 2 is
+served, /health reports serving_pending_verification:true and status
+degraded, and the tool still reports verified:false. When false, it
+returns tool_unverified.
+
+GET /v1/tools reports the checklist per tool as
+"verification": {"request_map", "live_check", "fixture", "tier",
+"defects"}, each either "pending" or what was recorded (for the live
+check, the operator's date).
+
 ### 9.4 Launch set
 
 The tools in Appendix A are verified before the connector serves
@@ -619,6 +635,9 @@ forwarded anywhere but AMD's login endpoint.
 
 ```
 {"tools": [{"name": "getdemographic", "domain": "patients", "verified": true,
+            "served": true,
+            "verification": {"request_map": "…", "live_check": "pending" | "<date>",
+                             "fixture": "…", "tier": "2", "defects": "fixed"},
             "write": false, "tier": 2, "schema": {...JSON schema...},
             "description": "…"}, …],
  "version": "1.0.0"}
@@ -637,10 +656,12 @@ Filtered to the caller's tools allowlist.
                                    "2": {"used": 4, "limit": 10},
                                    "3": {"used": 0, "limit": 21},
                                    "login": {"used": 1, "limit": 1}}},
- "registry": {"verified": 10, "unverified": 64}}
+ "registry": {"verified": 10, "unverified": 64},
+ "serving_pending_verification": false}
 ```
-status is degraded when the session is degraded or a queue is over 80%
-of its cap; starting until the first login attempt has completed.
+status is degraded when the session is degraded, a queue is over 80%
+of its cap, or CONNECTOR_SERVE_PENDING_VERIFICATION is true (section
+9.3); starting until the first login attempt has completed.
 
 ### 11.5 GET /metrics  (no token; internal network only)
 
@@ -999,6 +1020,7 @@ connector_up{instance_id}                              gauge
 | SHUTDOWN_DRAIN_S | no | 30 | |
 | LOG_LEVEL | no | INFO | |
 | WRITE_TOOLS_ENABLED | no | false | global gate; per-token may_write still required |
+| CONNECTOR_SERVE_PENDING_VERIFICATION | no | false | serve tools whose only missing 9.3 item is the operator live check; /health then reports degraded. False in production |
 
 Consumers:
 

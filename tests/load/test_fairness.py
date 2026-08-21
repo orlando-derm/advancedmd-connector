@@ -222,7 +222,9 @@ def _build(time_source: VirtualTime, *, state_path=None):
     # ContextVar, exactly as they do in production.
     install_client_factories()
 
-    registry = build_registry(verification=default_table(), tier_for=tier_for)
+    registry = build_registry(
+        verification=default_table(serve_pending=True), tier_for=tier_for
+    )
     callers = {
         "loadtest-batch": Caller(
             name="loadtest-batch", priority=PRIORITY_BATCH, phi=True, tools="*"

@@ -143,3 +143,38 @@ itself. Every fixture file starts with the comment line: "synthetic
 fixture - hand-written from reference client XML shapes, contains no
 real patient data" once it has been through the scrub-and-review steps
 above.
+
+## Live check procedure (SPEC 9.3 step 2)
+
+A tool is `verified` only when all five SPEC 9.3 checklist items are
+recorded. Items 1, 3, 4 and 5 are recorded in this repo; item 2, the live
+check, is **operator-only** and no agent may perform it. Until the
+operator records it, every Appendix A tool reports
+`"verified": false` with `"verification": {"live_check": "pending", ...}`
+on GET /v1/tools, and calling it returns `tool_unverified`.
+
+To promote one tool:
+
+1. On black-sky, run `scripts/record_fixture.py` for that tool against a
+   synthetic or consented test patient, and follow the fixture procedure
+   above (scrub, review on the box, commit).
+2. Confirm the reply carried `success="1"`. Record the date and the AMD
+   call count — no bodies — in that tool's ledger entry in
+   `docs/TOOL_TO_XML_MAP.md` (`## verification-ledger-<action>`),
+   replacing **PENDING OPERATOR** on the `Live check` line.
+3. Set the same date on the tool's row in `connector/verification.py`
+   (`live_check="YYYY-MM-DD"`). That row is what the registry reads; the
+   ledger entry is the record of why.
+4. Restart the connector. The tool now reports `"verified": true` with
+   the date as `verified_at`, and is served.
+
+### Serving before the live check
+
+`CONNECTOR_SERVE_PENDING_VERIFICATION` (SPEC 19, default **false**) exists
+so the connector can be exercised end to end before step 2 has happened.
+When it is true, a tool whose ONLY missing checklist item is the live
+check is served; every other unverified tool still returns
+`tool_unverified`, and the tools still report `"verified": false`
+honestly. `/health` then reports `"serving_pending_verification": true`
+and `"status": "degraded"`, because that is not a production posture.
+Leave it false in production.

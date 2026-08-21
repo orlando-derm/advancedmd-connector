@@ -345,13 +345,23 @@ def wire_real_deps(config: Config) -> Deps:
         office_key: str | None = None,
         wait: bool = True,
     ) -> dict[str, Any]:
-        """SPEC 11.2. Returns ok/reason only -- never which field was wrong."""
-        ok = await login_checker.check(username, password, office_key)
+        """SPEC 11.2. Returns ok/reason only -- never which field was wrong.
+
+        `wait` is forwarded, not swallowed: with wait=False and a full
+        login bucket the checker raises LoginBucketWait, which the route
+        turns into the SPEC 14 503 carrying retry_after_ms.
+        """
+        ok = await login_checker.check(username, password, office_key, wait=wait)
         return {"ok": bool(ok), "reason": None if ok else "invalid_credentials"}
 
     def build() -> Any:
         return registry.bind(
-            build_registry(verification=default_table(), tier_for=tier_for)
+            build_registry(
+                verification=default_table(
+                    serve_pending=config.serve_pending_verification
+                ),
+                tier_for=tier_for,
+            )
         )
 
     deps = Deps(
@@ -491,10 +501,23 @@ class Lifecycle:
             return False
         return self.deps.entry_queue.depth >= cap * QUEUE_DEGRADED_RATIO
 
+    def serving_pending_verification(self) -> bool:
+        """SPEC 19 CONNECTOR_SERVE_PENDING_VERIFICATION, as /health sees it.
+
+        True means tools whose only missing SPEC 9.3 item is the operator
+        live check are being served. That is a non-production posture, so
+        /health reports it and status() is degraded while it holds.
+        """
+        return bool(getattr(self.deps.config, "serve_pending_verification", False))
+
     def status(self) -> str:
-        """SPEC 11.4 status rules."""
+        """SPEC 11.4 status rules, plus the SPEC 9.3 pending-live-check
+        posture: serving unverified-but-for-the-live-check tools is
+        degraded, never ok."""
         if not self.login_attempted:
             return STATUS_STARTING
+        if self.serving_pending_verification():
+            return STATUS_DEGRADED
         if getattr(self.deps.session, "state", "none") != "ok":
             return STATUS_DEGRADED
         if self.queues_pressured():

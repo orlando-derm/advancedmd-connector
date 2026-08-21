@@ -243,10 +243,23 @@ class RegistryEntry:
     write_action: bool = False
     #: Authoritative tier from the tier table (SPEC 7.4).
     tier: int = 3
+    #: SPEC 9.2/9.3: all five checklist items recorded, live check included.
     verified: bool = False
     verified_at: str | None = None
     verification_ref: str | None = None
     aliases: tuple[str, ...] = ()
+    #: Whether the worker may run the handler. None means "same as
+    #: verified"; the registry sets it explicitly so that
+    #: CONNECTOR_SERVE_PENDING_VERIFICATION can serve a tool whose only
+    #: missing checklist item is the operator live check (SPEC 9.3 step 2).
+    served: bool | None = None
+    #: The SPEC 9.3 checklist as reported by GET /v1/tools, or None for a
+    #: tool with no ledger row at all.
+    checklist: Mapping[str, str] | None = None
+
+    @property
+    def is_served(self) -> bool:
+        return self.verified if self.served is None else bool(self.served)
 
     @property
     def names(self) -> tuple[str, ...]:

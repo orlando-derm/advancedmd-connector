@@ -32,6 +32,7 @@ DEFAULTS: dict[str, str] = {
     "SHUTDOWN_DRAIN_S": "30",
     "LOG_LEVEL": "INFO",
     "WRITE_TOOLS_ENABLED": "false",
+    "CONNECTOR_SERVE_PENDING_VERIFICATION": "false",
     "MCP_SESSION_IDLE_S": "3600",
 }
 
@@ -77,6 +78,13 @@ class Config:
     shutdown_drain_s: int = 30
     log_level: str = "INFO"
     write_tools_enabled: bool = False
+    #: SPEC 9.3 / 19. False in production: a tool whose SPEC 9.3 live
+    #: check is still PENDING OPERATOR is not served and the worker
+    #: answers tool_unverified. True serves tools whose ONLY missing
+    #: checklist item is that operator live check, so the connector can
+    #: be exercised end to end before the operator runs it; /health then
+    #: reports serving_pending_verification and status degraded.
+    serve_pending_verification: bool = False
     #: SPEC 15: an MCP session is dropped after this long idle.
     mcp_session_idle_s: int = 3600
 
@@ -101,6 +109,7 @@ class Config:
             "shutdown_drain_s": self.shutdown_drain_s,
             "log_level": self.log_level,
             "write_tools_enabled": self.write_tools_enabled,
+            "serve_pending_verification": self.serve_pending_verification,
             "mcp_session_idle_s": self.mcp_session_idle_s,
         }
 
@@ -167,6 +176,9 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         shutdown_drain_s=_as_int(env, "SHUTDOWN_DRAIN_S"),
         log_level=_get(env, "LOG_LEVEL").strip().upper() or "INFO",
         write_tools_enabled=_as_bool(env, "WRITE_TOOLS_ENABLED"),
+        serve_pending_verification=_as_bool(
+            env, "CONNECTOR_SERVE_PENDING_VERIFICATION"
+        ),
         mcp_session_idle_s=_as_int(env, "MCP_SESSION_IDLE_S"),
     )
     _validate(cfg)

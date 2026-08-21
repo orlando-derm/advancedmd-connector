@@ -275,6 +275,23 @@ class RateClock:
             wait = (dq[0] + WINDOW_S) - now
             await self._sleep(max(wait, 0.0))
 
+    def next_free_ms(self, tier: int | str) -> int:
+        """Milliseconds until this tier's office bucket has a free slot.
+
+        0 when a slot is free right now. Consumes nothing and contacts
+        nothing: this is the non-waiting estimate SPEC 11.2 hands back as
+        retry_after_ms when a caller sets wait=false.
+        """
+        now = self._monotonic()
+        if now < self._cold_until:
+            return int(math.ceil((self._cold_until - now) * 1000.0))
+        dq = self._deque(self.office_bucket(tier))
+        self._prune(dq, now)
+        if len(dq) < self.limit(tier):
+            return 0
+        wait = (dq[0] + WINDOW_S) - now
+        return max(int(math.ceil(wait * 1000.0)), 0)
+
     @staticmethod
     def _prune(dq: deque[float], now: float) -> None:
         cutoff = now - WINDOW_S

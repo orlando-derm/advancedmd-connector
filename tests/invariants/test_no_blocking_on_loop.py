@@ -156,6 +156,10 @@ def _write_env(tmp_path) -> "tuple[Any, str]":
             "CONNECTOR_TOKENS_PATH": str(tokens_path),
             "CLOCK_STATE_PATH": str(clock_path),
             "AMD_POST_TIMEOUT_S": "30",
+            # SPEC 9.3 step 2 is the operator's; this test still has to
+            # drive a real tool through the real graph, so it takes the
+            # documented pre-live-check posture explicitly.
+            "CONNECTOR_SERVE_PENDING_VERIFICATION": "true",
         }
     )
     return config, plaintext

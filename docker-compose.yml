@@ -39,6 +39,10 @@ services:
       SHUTDOWN_DRAIN_S: ${SHUTDOWN_DRAIN_S:-30}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       WRITE_TOOLS_ENABLED: ${WRITE_TOOLS_ENABLED:-false}
+      # SPEC 9.3 / 19. Stays false in production: a tool whose operator
+      # live check is still pending returns tool_unverified. Set true only
+      # to exercise the connector before the live check is recorded.
+      CONNECTOR_SERVE_PENDING_VERIFICATION: ${CONNECTOR_SERVE_PENDING_VERIFICATION:-false}
     volumes:
       - connector-data:/data
     healthcheck:

@@ -437,6 +437,62 @@ def test_login_bucket_wait():
     assert body["error"]["retry_after_ms"] == 1500
 
 
+async def test_login_bucket_wait_comes_from_the_real_login_checker():
+    """SPEC 11.2/14 end to end: the REAL checker over a REAL RateClock.
+
+    The only injections are the time source, the sleep, and the throwaway
+    session factory -- AdvancedMD is never contacted, and no login slot is
+    spent answering the wait=false caller.
+    """
+    from connector.clock import LOGIN_TIER, RateClock
+    from connector.session import LoginChecker
+
+    ticker = {"t": 1000.0}
+
+    async def sleep(seconds: float) -> None:  # pragma: no cover - never hit
+        ticker["t"] += seconds
+
+    clock = RateClock(
+        office_key=MOCK_OFFICE_KEY,
+        monotonic=lambda: ticker["t"],
+        sleep=sleep,
+        load_state=False,
+    )
+
+    class Throwaway:
+        token = None
+
+        async def login(self, force: bool = False) -> None:
+            await clock.acquire(LOGIN_TIER)
+
+    deps, _ = build_deps()
+    checker = LoginChecker(deps.config, clock,
+                           session_factory=lambda **kw: Throwaway())
+
+    async def login_check(username, password, office_key=None, wait=True):
+        ok = await checker.check(username, password, office_key, wait=wait)
+        return {"ok": bool(ok), "reason": None if ok else "invalid_credentials"}
+
+    deps.login_check = login_check
+    # Fill the 1-per-minute login bucket.
+    await clock.acquire(LOGIN_TIER)
+
+    with client(deps) as c:
+        r = c.post("/v1/login",
+                   json={"username": MOCK_USERNAME, "password": MOCK_PASSWORD,
+                         "office_key": MOCK_OFFICE_KEY, "wait": False},
+                   headers={"Authorization": f"Bearer {INTERACTIVE}"})
+
+    assert r.status_code == 503
+    body = r.json()
+    assert body["ok"] is False
+    assert body["error"]["code"] == "login_bucket_wait"
+    assert 0 < body["error"]["retry_after_ms"] <= 60_000
+    assert r.headers["Retry-After"] == "1"
+    # The refused caller consumed nothing.
+    assert clock.snapshot()[LOGIN_TIER]["used"] == 1
+
+
 def test_login_password_never_appears_in_logs(caplog):
     deps, _ = build_deps()
     secret = "placeholder-password"
@@ -497,6 +553,12 @@ def test_get_tools_lists_aliases_and_filters_to_allowlist():
     assert entry["tier"] == 2
     assert entry["schema"]["type"] == "object"
     assert entry["description"]
+    # SPEC 11.3: the per-tool SPEC 9.3 checklist. A tool with no ledger
+    # row reports every item pending, the live check included.
+    assert entry["verification"]["live_check"] == "pending"
+    assert set(entry["verification"]) == {
+        "request_map", "live_check", "fixture", "tier", "defects",
+    }
 
     narrow_names = {t["name"] for t in narrow["tools"]}
     assert narrow_names == {"amd_patients_get_demographic",
@@ -514,7 +576,8 @@ def test_health_shape_and_no_token_required():
     body = r.json()
     assert set(body) == {"status", "instance_id", "version", "uptime_s",
                          "session", "entry_queue", "request_queue", "clock",
-                         "registry"}
+                         "registry", "serving_pending_verification"}
+    assert body["serving_pending_verification"] is False
     assert body["instance_id"] == "synthetic-instance"
     assert body["session"]["state"] == "ok"
     assert set(body["entry_queue"]) == {"depth", "oldest_wait_ms"}
@@ -523,6 +586,18 @@ def test_health_shape_and_no_token_required():
     assert set(body["clock"]["tiers"]) == {"1", "2", "3", "login"}
     assert body["registry"] == {"verified": 4, "unverified": 1}
     assert body["status"] in {"ok", "starting"}
+
+
+def test_health_reports_and_degrades_on_serving_pending_verification():
+    """SPEC 9.3 / 19: the pre-live-check posture is announced, not hidden."""
+    deps, _ = build_deps({"CONNECTOR_SERVE_PENDING_VERIFICATION": "true"})
+    with client(deps) as c:
+        for _ in range(50):
+            body = c.get("/health").json()
+            if body["status"] != "starting":
+                break
+    assert body["serving_pending_verification"] is True
+    assert body["status"] == "degraded"
 
 
 def test_health_ok_after_login():

@@ -28,7 +28,7 @@ from connector.client_shim import AMDClient
 from connector.interfaces import AUDIT_KEYS, Caller
 from connector.queues import PRIORITY_INTERACTIVE, ToolRequest
 from connector.registry import build_registry
-from connector.verification import APPENDIX_A, LAUNCH_SET
+from connector.verification import APPENDIX_A, LAUNCH_SET, default_table
 from connector.worker import Worker, install_client_factories
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
@@ -115,7 +115,11 @@ class AllowAll:
 @pytest.fixture(scope="module")
 def registry():
     install_client_factories()
-    return build_registry()
+    # SPEC 9.3 step 2 is the operator's live call and cannot happen here,
+    # so this suite takes the CONNECTOR_SERVE_PENDING_VERIFICATION
+    # posture: everything else on the checklist is recorded, and the
+    # worker is allowed to run the handler.
+    return build_registry(verification=default_table(serve_pending=True))
 
 
 async def run_tool(registry, name: str, entry_queue) -> tuple[Any, RecordingSender, list]:
