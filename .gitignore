@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+*.db
+/data/
+clock.json
+tokens.json
+runtime/
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+*.egg-info/
+.DS_Store
+.pytest_cache/
+# vendor documentation is not redistributable
+knowledge/**/*.docx
