@@ -28,7 +28,9 @@ SYNTHETIC = (
     "contains no real patient data"
 )
 
-REGIONAL_HOST = "https://regional.example.invalid"
+# SPEC 17.4: the redirect target must be an https AdvancedMD host, so the
+# synthetic regional host is shaped like one. No real endpoint is contacted.
+REGIONAL_HOST = "https://regional-synthetic.advancedmd.com"
 REGIONAL_ENDPOINT = REGIONAL_HOST + REDIRECT_PATH
 REDIRECT_CODE = "-2147220476"
 
@@ -190,6 +192,65 @@ async def test_no_redirect_means_the_base_url_is_the_endpoint(config):
     session = make_session(config, handler)
     await session.login()
     assert session.endpoint == DEFAULT_AMD_BASE_URL
+
+
+async def test_a_plain_http_redirect_target_is_refused(config):
+    """SPEC 17.4: the credentials are re-posted to this URL. Never over http."""
+    seen: list[httpx.URL] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url)
+        return httpx.Response(
+            200, content=login_redirect("http://regional-synthetic.advancedmd.com")
+        )
+
+    session = make_session(config, handler)
+    with pytest.raises(SessionFailed):
+        await session.login()
+    # Only the first post happened; nothing was sent to the http target.
+    assert len(seen) == 1
+    assert session.state == "degraded"
+
+
+async def test_a_foreign_redirect_host_is_refused(config):
+    seen: list[httpx.URL] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url)
+        return httpx.Response(200, content=login_redirect("https://evil.example.invalid"))
+
+    session = make_session(config, handler)
+    with pytest.raises(SessionFailed):
+        await session.login()
+    assert len(seen) == 1
+    assert session.state == "degraded"
+
+
+async def test_a_lookalike_redirect_host_is_refused(config):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, content=login_redirect("https://advancedmd.com.evil.example.invalid")
+        )
+
+    session = make_session(config, handler)
+    with pytest.raises(SessionFailed):
+        await session.login()
+
+
+async def test_a_bare_host_redirect_is_upgraded_to_https(config):
+    seen: list[httpx.URL] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url)
+        if len(seen) == 1:
+            return httpx.Response(
+                200, content=login_redirect("regional-synthetic.advancedmd.com")
+            )
+        return httpx.Response(200, content=login_ok())
+
+    session = make_session(config, handler)
+    await session.login()
+    assert str(seen[1]) == REGIONAL_ENDPOINT
 
 
 # ------------------------------------------------------------- refusal

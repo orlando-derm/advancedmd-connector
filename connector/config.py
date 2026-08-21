@@ -21,7 +21,7 @@ DEFAULTS: dict[str, str] = {
     "AMD_APP_NAME": "TEMP",
     "AMD_BASE_URL": "",
     "CONNECTOR_PORT": "8820",
-    "CONNECTOR_BIND": "0.0.0.0",
+    "CONNECTOR_BIND": "127.0.0.1",
     "CLOCK_STATE_PATH": "/data/clock.json",
     "CLOCK_MARGIN": "0.90",
     "EXECUTION_ALLOWANCE_MS": "120000",
@@ -66,7 +66,7 @@ class Config:
     amd_app_name: str = "TEMP"
     amd_base_url: str = ""
     connector_port: int = 8820
-    connector_bind: str = "0.0.0.0"
+    connector_bind: str = "127.0.0.1"
     clock_state_path: str = "/data/clock.json"
     clock_margin: float = 0.90
     execution_allowance_ms: int = 120000
@@ -191,5 +191,9 @@ def _validate(cfg: Config) -> None:
             raise ConfigError(f"{name} must not be negative")
     if cfg.amd_post_timeout_s <= 0:
         raise ConfigError("AMD_POST_TIMEOUT_S must be greater than 0")
+    # SPEC 17.4: AMD traffic is HTTPS. An operator override must not be
+    # able to downgrade it. The value is never named in the error.
+    if cfg.amd_base_url and not cfg.amd_base_url.lower().startswith("https://"):
+        raise ConfigError("AMD_BASE_URL must be an https:// URL")
     if cfg.log_level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
         raise ConfigError("LOG_LEVEL must be a standard logging level name")

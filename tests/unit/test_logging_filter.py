@@ -144,6 +144,40 @@ def test_there_is_exactly_one_handler_and_one_filter(captured):
     assert ours[0].filters == [log_filter]
 
 
+def test_uvicorns_own_handlers_are_filtered_too():
+    """SPEC 17.3: a logger with propagate=False is a second path out."""
+    import logging.config
+
+    from uvicorn.config import LOGGING_CONFIG
+
+    saved_handlers = logging.getLogger().handlers[:]
+    saved_level = logging.getLogger().level
+    try:
+        logging.config.dictConfig(LOGGING_CONFIG)
+        log_filter = configure("INFO", stream=io.StringIO())
+        reachable = []
+        for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+            reachable.extend(logging.getLogger(name).handlers)
+        assert reachable, "uvicorn installed no handlers; the test proves nothing"
+        for handler in reachable:
+            assert log_filter in handler.filters
+        for name, logger in list(logging.Logger.manager.loggerDict.items()):
+            if isinstance(logger, logging.Logger) and not logger.propagate:
+                for handler in logger.handlers:
+                    assert log_filter in handler.filters, name
+    finally:
+        root = logging.getLogger()
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+        for handler in saved_handlers:
+            root.addHandler(handler)
+        root.setLevel(saved_level)
+        for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+            logger = logging.getLogger(name)
+            logger.handlers = []
+            logger.propagate = True
+
+
 @pytest.mark.parametrize("name", PINNED_WARNING_LOGGERS)
 def test_http_libraries_are_pinned_to_warning(name, captured):
     assert logging.getLogger(name).level == logging.WARNING
@@ -161,3 +195,55 @@ def test_configure_sets_the_requested_level(captured):
     assert logging.getLogger().level == logging.WARNING
     configure("INFO", stream=io.StringIO())
     assert logging.getLogger().level == logging.INFO
+
+
+# --------------------------------------------------- exception state
+
+
+IDENTITY_SHAPED = "patient Aaaa Bbbb dob 1/1/1900 chart AB1234"
+
+
+def test_a_traceback_never_reaches_the_stream(captured):
+    """SPEC 17.3: the Formatter appends exc_info AFTER the filter runs."""
+    stream, _ = captured
+    log = logging.getLogger("connector.test.exc")
+    payload = "z" * 400
+    try:
+        raise ValueError(f"{IDENTITY_SHAPED} {payload}")
+    except ValueError:
+        log.exception("unhandled receiver exception")
+    written = stream.getvalue()
+    assert payload not in written
+    assert IDENTITY_SHAPED not in written
+    assert "Traceback" not in written
+    assert "ValueError" in written
+
+
+def test_a_chained_exception_reports_class_names_only(captured):
+    stream, _ = captured
+    log = logging.getLogger("connector.test.exc")
+    try:
+        try:
+            raise KeyError(IDENTITY_SHAPED)
+        except KeyError as exc:
+            raise RuntimeError("y" * 400) from exc
+    except RuntimeError:
+        log.exception("sender loop failed")
+    written = stream.getvalue()
+    assert IDENTITY_SHAPED not in written
+    assert "y" * 400 not in written
+    assert "RuntimeError" in written and "KeyError" in written
+
+
+def test_exc_info_is_cleared_off_the_record():
+    record = logging.makeLogRecord({"msg": "boom", "args": ()})
+    try:
+        raise ValueError(IDENTITY_SHAPED)
+    except ValueError:
+        import sys
+
+        record.exc_info = sys.exc_info()
+    RedactingFilter().filter(record)
+    assert record.exc_info is None
+    assert record.exc_text is None
+    assert IDENTITY_SHAPED not in record.getMessage()

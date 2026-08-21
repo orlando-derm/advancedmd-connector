@@ -21,6 +21,7 @@ anything below WARNING so no HTTP library can log a body.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Iterable, Mapping
 
 __all__ = [
@@ -30,6 +31,8 @@ __all__ = [
     "PINNED_WARNING_LOGGERS",
     "RedactingFilter",
     "redact_value",
+    "exception_summary",
+    "NON_PROPAGATING_LOGGERS",
     "configure",
 ]
 
@@ -71,6 +74,47 @@ def redact_value(value: Any, key: Any = None) -> Any:
     return REDACTION if len(text) > MAX_VALUE_CHARS else text
 
 
+def exception_summary(exc_info: Any) -> str:
+    """A PHI-free rendering of an exception chain.
+
+    Only CLASS NAMES and the final frame's file:line are kept. The
+    exception's str() is routed through redact_value() and, because an
+    exception message routinely quotes an argument, an XML line or a
+    body, it is never emitted verbatim: only its length is reported.
+    """
+    if not exc_info or not isinstance(exc_info, tuple) or len(exc_info) != 3:
+        return "exception"
+    exc = exc_info[1]
+    if exc is None:
+        exc_type = exc_info[0]
+        return getattr(exc_type, "__name__", "exception")
+
+    names: list[str] = []
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen and len(names) < 8:
+        seen.add(id(current))
+        names.append(type(current).__name__)
+        current = current.__cause__ or current.__context__
+
+    where = ""
+    tb = exc_info[2]
+    while tb is not None:
+        frame = tb.tb_frame
+        where = f"{os.path.basename(frame.f_code.co_filename)}:{tb.tb_lineno}"
+        tb = tb.tb_next
+
+    # str(exc) is inspected only to report its size. The text itself is
+    # never placed on the record.
+    detail = redact_value(str(exc))
+    detail_chars = len(str(exc)) if isinstance(detail, str) else 0
+    chain = " <- ".join(names)
+    rendered = f"exception {chain}"
+    if where:
+        rendered += f" at {where}"
+    return f"{rendered} detail={REDACTION} ({detail_chars} chars)"
+
+
 class RedactingFilter(logging.Filter):
     """The single SPEC 17.3 filter. Attach once, to the root handler."""
 
@@ -87,6 +131,29 @@ class RedactingFilter(logging.Filter):
                 continue
             setattr(record, key, redact_value(getattr(record, key), key))
 
+        # Exception state. The Formatter appends the raw traceback after
+        # the message and never sees this filter's rules, so the traceback
+        # is replaced here with a PHI-free summary and then removed.
+        summary = ""
+        if getattr(record, "exc_info", None):
+            summary = exception_summary(record.exc_info)
+        elif getattr(record, "exc_text", None):
+            summary = "exception"
+        if summary:
+            try:
+                base = record.getMessage()
+            except Exception:  # pragma: no cover - a broken format string
+                base = str(record.msg)
+            base = redact_value(base)
+            if not isinstance(base, str) or len(base) > MAX_VALUE_CHARS:
+                base = REDACTION
+            record.msg = f"{base} | {summary}"
+            record.args = ()
+        record.exc_info = None
+        record.exc_text = None
+        if getattr(record, "stack_info", None):
+            record.stack_info = None
+
         # The message itself. Interpolate first so a long value cannot
         # survive by hiding behind a placeholder.
         try:
@@ -100,6 +167,28 @@ class RedactingFilter(logging.Filter):
             record.msg = rendered
             record.args = ()
         return True
+
+
+#: Loggers that configure their own handlers with propagate=False, so the
+#: root handler never sees their records (SPEC 17.3).
+NON_PROPAGATING_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access")
+
+
+def _attach_to_unreachable_handlers(log_filter: RedactingFilter) -> None:
+    """Add the filter to handlers the root handler cannot reach.
+
+    A logger with propagate=False keeps its records to itself, so its own
+    handlers are a second path to the stream. Give them the same filter.
+    """
+    names = set(NON_PROPAGATING_LOGGERS)
+    for name, logger in list(logging.Logger.manager.loggerDict.items()):
+        if isinstance(logger, logging.Logger) and not logger.propagate:
+            names.add(name)
+    for name in names:
+        logger = logging.getLogger(name)
+        for handler in list(logger.handlers):
+            if log_filter not in handler.filters:
+                handler.addFilter(log_filter)
 
 
 def configure(
@@ -123,6 +212,12 @@ def configure(
         root.removeHandler(existing)
     root.addHandler(handler)
     root.setLevel(getattr(logging, str(level).upper(), logging.INFO))
+
+    # SPEC 17.3: the filter must be the ONLY path to the log stream.
+    # uvicorn's dictConfig installs its own StreamHandlers on loggers with
+    # propagate=False, which the root handler never sees; attach the same
+    # filter to every handler already reachable in the manager.
+    _attach_to_unreachable_handlers(log_filter)
 
     for name in (*PINNED_WARNING_LOGGERS, *extra_pinned):
         pinned = logging.getLogger(name)

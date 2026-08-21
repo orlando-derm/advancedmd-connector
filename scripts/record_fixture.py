@@ -21,9 +21,10 @@ Procedure (SPEC 23.3):
   1. Post one request for one tool.
   2. Save the request XML as-is (it contains no PHI beyond the id you
      passed, which is the id of a test patient).
-  3. Pass the reply through the PHI allowlist scrubber below, which
-     replaces every matching attribute value and element text with a
-     deterministic synthetic value, preserving structure and id formats.
+  3. Pass the reply through the scrubber below, which replaces EVERY
+     attribute value and EVERY text node with a deterministic synthetic
+     value, exempting only the structural allowlist (STRUCTURAL_ATTRS),
+     and preserving structure and id formats.
   4. Operator reviews and commits.
 
 Usage:
@@ -54,46 +55,77 @@ BANNER = """
 """
 
 PROVENANCE = (
-    "recorded by scripts/record_fixture.py and scrubbed against the PHI "
-    "allowlist; reviewed by the operator before commit; contains no real "
-    "patient data"
+    "recorded by scripts/record_fixture.py and scrubbed against the "
+    "structural allowlist; reviewed by the operator before commit; "
+    "contains no real patient data"
 )
 
-# SPEC 23.3 step 2: the PHI allowlist. Any attribute whose name contains
-# one of these fragments has its value replaced. Matching is on the
-# lowercased attribute name so vendor casing does not matter.
-PHI_ATTR_FRAGMENTS = (
-    "name",
-    "dob",
-    "birth",
-    "addr",
-    "address",
-    "city",
-    "state",
-    "zip",
-    "phone",
-    "fax",
-    "cell",
-    "ssn",
-    "chart",
-    "email",
-    "memo",
-    "note",
-    "comment",
-    "guarantor",
-    "employer",
-    "policy",
-    "subscriber",
-)
+# SPEC 23.3 step 2: the STRUCTURAL ALLOWLIST. This is the ONLY set of
+# attribute names whose value is allowed to survive a recording. Every
+# other attribute value, and every non-empty text node, is replaced with
+# a deterministic synthetic value -- whether or not this file anticipated
+# the name. A denylist cannot be safe here: AMD adds fields we have never
+# seen, and any one of them may be free prose about a patient.
+#
+# Membership rule: a name belongs here only if the PARSER needs its real
+# value and the value cannot describe a person.
+STRUCTURAL_ATTRS = frozenset({
+    "success",
+    "class",
+    "action",
+    "count",
+    "recordcount",
+    "totalcount",
+    "pagecount",
+    "page",
+    "index",
+    "code",
+    "faultcode",
+    "type",
+    "status",
+    "version",
+    "encoding",
+})
 
-# Elements whose *text* is free prose and therefore PHI-bearing.
-PHI_TEXT_TAGS = ("note", "memo", "comment", "text", "narrative", "usercontext")
+# Attribute names whose value must keep its FORMAT (the parser asserts on
+# the shape) but must not keep its content. These get a shape-preserving
+# synthetic id, not the real one.
+ID_ATTRS_KEEP_FORMAT = frozenset({
+    "id",
+    "patientid",
+    "visitid",
+    "chartnumber",
+    "carrierid",
+    "providerid",
+    "facilityid",
+    "profileid",
+    "insuranceid",
+    "chargeid",
+    "noteid",
+    "appointmentid",
+})
 
 # Deterministic synthetic replacements, chosen to preserve shape.
 SYNTHETIC_TOKENS = [
     "SYNTHETIC-ALPHA", "SYNTHETIC-BRAVO", "SYNTHETIC-CHARLIE",
     "SYNTHETIC-DELTA", "SYNTHETIC-ECHO", "SYNTHETIC-FOXTROT",
 ]
+
+SYNTHETIC_TEXT = "SYNTHETIC TEXT REMOVED BY record_fixture.py"
+
+
+def _shape_preserving(value: str, digest: str) -> str:
+    """Same length, same digit/letter/punctuation positions, new content."""
+    out = []
+    for i, ch in enumerate(value):
+        if ch.isdigit():
+            d = digest[i % len(digest)]
+            out.append(d if d.isdigit() else "0")
+        elif ch.isalpha():
+            out.append("X" if ch.isupper() else "x")
+        else:
+            out.append(ch)
+    return "".join(out)
 
 
 def _synthetic_for(attr: str, value: str) -> str:
@@ -116,35 +148,29 @@ def _synthetic_for(attr: str, value: str) -> str:
         return f"synthetic{digest[:6]}@example.invalid"
     if "zip" in lowered:
         return "00000"
-    if "chart" in lowered:
-        # Preserve the format: same length, same digit/letter positions.
-        out = []
-        for i, ch in enumerate(value):
-            if ch.isdigit():
-                out.append(digest[i % len(digest)] if digest[i % len(digest)].isdigit() else "0")
-            elif ch.isalpha():
-                out.append("X" if ch.isupper() else "x")
-            else:
-                out.append(ch)
-        return "".join(out)
+    if lowered in ID_ATTRS_KEEP_FORMAT or "chart" in lowered or lowered.endswith("id"):
+        return _shape_preserving(value, digest)
     return SYNTHETIC_TOKENS[int(digest[:4], 16) % len(SYNTHETIC_TOKENS)]
 
 
 def scrub(tree: etree._Element) -> etree._Element:
-    """Replace every PHI-allowlisted attribute value and free-text node.
+    """Replace EVERY attribute value and EVERY non-empty text node.
 
-    Structure, tag names, attribute names, ids and success flags survive
-    untouched: the fixture must still exercise the parser.
+    This is an allowlist, not a denylist: a value survives only if its
+    attribute name is in STRUCTURAL_ATTRS. Anything else -- a name we
+    have seen, a name we have not, a memo, a carrier field, free prose --
+    is replaced. Tag names, attribute names and structure survive, so the
+    fixture still exercises the parser.
     """
     for element in tree.iter():
         for attr, value in list(element.attrib.items()):
-            lowered = attr.lower()
-            if any(fragment in lowered for fragment in PHI_ATTR_FRAGMENTS):
-                element.set(attr, _synthetic_for(attr, value))
-        tag = str(element.tag).lower()
+            if str(attr).lower() in STRUCTURAL_ATTRS:
+                continue
+            element.set(attr, _synthetic_for(attr, value))
         if element.text and element.text.strip():
-            if any(fragment in tag for fragment in PHI_TEXT_TAGS):
-                element.text = "SYNTHETIC TEXT REMOVED BY record_fixture.py"
+            element.text = SYNTHETIC_TEXT
+        if element.tail and element.tail.strip():
+            element.tail = SYNTHETIC_TEXT
     return tree
 
 

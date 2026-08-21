@@ -20,6 +20,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
+from urllib.parse import urlsplit
 
 import httpx
 from lxml import etree
@@ -39,6 +40,7 @@ from connector.sender import (
 __all__ = [
     "DEFAULT_AMD_BASE_URL",
     "REDIRECT_PATH",
+    "AMD_HOST_SUFFIX",
     "AmdSession",
     "LoginChecker",
     "login_cache_key",
@@ -56,6 +58,10 @@ DEFAULT_AMD_BASE_URL = (
 #: SPEC 8.1: the login reply's redirect names a regional webserver; the
 #: endpoint is that host plus this path.
 REDIRECT_PATH = "/xmlrpc/processrequest.aspx"
+
+#: SPEC 17.4: the credentials are re-posted to the redirect target, so the
+#: target must be AdvancedMD over TLS. Anything else is refused.
+AMD_HOST_SUFFIX = ".advancedmd.com"
 
 Sleeper = Callable[[float], Awaitable[None]]
 
@@ -311,6 +317,18 @@ class AmdSession:
         webserver = (element.get("webserver") or "").strip()
         if not webserver:
             return None
+        if "//" not in webserver:
+            # AMD returns a bare host; it is always HTTPS.
+            webserver = "https://" + webserver
+        parts = urlsplit(webserver)
+        host = (parts.hostname or "").lower()
+        if parts.scheme != "https" or not host.endswith(AMD_HOST_SUFFIX):
+            # Neither the URL nor the credentials it would have carried
+            # are logged.
+            log.warning(
+                "login redirect target refused: not an https AdvancedMD host"
+            )
+            raise SessionFailed()
         return webserver.rstrip("/") + REDIRECT_PATH
 
     def _degrade(self) -> None:

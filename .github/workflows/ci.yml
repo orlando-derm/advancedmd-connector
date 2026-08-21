@@ -1,0 +1,46 @@
+# SPEC 23.6/23.7: the connector-side invariants must actually execute
+# somewhere. This is that somewhere.
+#
+# No job in this workflow may contact AdvancedMD, and no credential is
+# available to it: the suite is offline by construction.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Full suite, including the invariants
+        run: python -m pytest tests -q
+
+      - name: SPEC 23.6 invariants, run again on their own so a skip is visible
+        run: python -m pytest tests/invariants -q
+
+      - name: No bare host port mapping in docker-compose.yml
+        run: |
+          if grep -nE '^[[:space:]]*-[[:space:]]*"?[0-9]+:[0-9]+"?[[:space:]]*$' docker-compose.yml; then
+            echo "docker-compose.yml publishes on all host interfaces; bind the mapping to an address"
+            exit 1
+          fi
+
+      - name: No committed .env
+        run: |
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "a .env file is tracked"
+            exit 1
+          fi

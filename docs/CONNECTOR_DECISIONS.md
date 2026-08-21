@@ -224,3 +224,78 @@ single lane owned.
 - Metrics are fed from the audit line's own fields
   (lifecycle._AuditingMetrics): a value the SPEC 17.2 key set forbids in
   an audit line cannot reach a public /metrics label either.
+
+## D19. Tailnet-only transport (accepted risk)
+The connector binds to the Docker compose network and the Tailscale
+interface only; it has no public port (SPEC 17.4). Transport inside the
+tailnet is WireGuard-encrypted by Tailscale, and version 1 adds no TLS
+termination on top of that. This is an accepted risk, not an oversight:
+the condition attached to accepting it is that the tailnet remains the
+only route to the connector. If that ever stops being true — a public
+port is added, or the connector becomes reachable from outside the
+tailnet by any other means — TLS termination inside the tailnet (SPEC
+25) is no longer deferrable and must be built before that route ships.
+/health and /metrics are unauthenticated but are covered by the same
+condition: their exposure is safe only because they are unreachable from
+outside the tailnet.
+
+## D20. The login-check cache (SPEC 8.7)
+/v1/login (the admin-console forwarded-credential check) shares the
+connector's 1-per-minute login bucket with the connector's own session
+login, through a separate, throwaway AmdSession that never touches the
+connector's session. Sharing the bucket means concurrent staff logins
+serialize behind it — the second one waits up to 60 s. The mitigation is
+an in-memory cache, keyed on sha256(username + office_key + password),
+of successful checks for LOGIN_CHECK_CACHE_S (default 300 s); a cache
+hit consumes no login-bucket slot. The password itself is never in the
+cache, never logged, and never written to disk in any form — only the
+digest and an expiry timestamp are held, and only in memory. The cache
+is cleared on every restart, so a fresh process re-pays one login-bucket
+slot per distinct credential it checks until its own cache warms back
+up.
+
+## D21. Clock persistence across restart (SPEC 7.5)
+The rate clock writes its bucket state (wall-clock epoch timestamps, not
+monotonic ones, since monotonic time is meaningless across a restart) to
+CLOCK_STATE_PATH on every acquire, off the event loop via
+asyncio.to_thread so the write can never block a send. On startup it
+loads that file and honors any timestamp still under 60 s old, replaying
+it into the new process's monotonic frame by the wall-clock offset
+between the write and the load. A missing or unreadable file is treated
+as "the previous process's spend this minute is unknown," which means
+every bucket starts as if it were already full for a full 60 s window —
+the conservative direction, because a restart that let a new process
+believe its buckets were empty could double a minute's actual sends
+against AdvancedMD's cap and its $0.01-per-excess-call billing. The
+session itself is deliberately not persisted the same way: it is
+memory-only and a restart always re-logs-in, which is why two restarts
+inside one minute produce a self-healing degraded start (SPEC 16.3)
+rather than a clock violation.
+
+## D22. Two ambiguity resolutions, recorded (A1, A2)
+Both are binding for this build; this entry exists so they are findable
+from the decisions file rather than only from the build brief that
+resolved them.
+
+- **A1 — canonical tool_name plus Appendix A bare-action aliases.**
+  Appendix A and SPEC 10.4 name AMD actions bare (e.g. getdemographic);
+  the policy files copied from amd-mcp expose namespaced tool names
+  (e.g. amd_patients_get_demographic). The policy tool_name is the
+  canonical registry key. Each Appendix A tool additionally registers
+  its bare AMD action name as an alias resolving to the same registry
+  entry. Token `tools` allowlists and `may_write` accept either
+  spelling. GET /v1/tools lists the canonical name plus an `aliases`
+  list; MCP tools/list advertises canonical names only, which is what
+  keeps SPEC 12.1 parity with today's amd-mcp servers intact.
+- **A2 — amd_client is not vendored; client_shim.py is the facade.**
+  The vendored amd-mcp/amd_client/client.py opens its own sockets and
+  drives its own login and rate limiting, so copying it into domains/
+  would violate SPEC 6.2 and hand the process a second, uncoordinated
+  clock. connector/client_shim.py instead provides an AMDClient-shaped
+  facade — the same method surface (call(action, class_, *,
+  children=None, **attrs), get_patient_bundle, get_visits_for_date,
+  get_appointments_via_reminders) — implemented as pure XML request
+  construction plus `await connector.sender.send()`. Copied handlers get
+  one of these from their existing client factory and their call sites
+  do not change. amd_mcp_common.rate_limit is correspondingly not
+  copied either; connector/clock.py is the only clock in the process.

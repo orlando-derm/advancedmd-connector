@@ -294,3 +294,23 @@ def test_shim_holds_no_token_and_no_endpoint(amd_client):
     """The facade never sees the usercontext or the AMD URL (SPEC 6.2)."""
     assert not hasattr(amd_client, "usercontext")
     assert not hasattr(amd_client, "endpoint_url")
+
+
+def test_a_non_https_amd_base_url_override_is_refused(base_env):
+    """SPEC 17.4: an operator override must not downgrade AMD transport."""
+    for value in (
+        "http://partnerlogin.advancedmd.com/xmlrpc/processrequest.aspx",
+        "ftp://partnerlogin.advancedmd.com/",
+        "partnerlogin.advancedmd.com",
+    ):
+        with pytest.raises(ConfigError) as caught:
+            load_config({**base_env, "AMD_BASE_URL": value})
+        message = str(caught.value)
+        assert "AMD_BASE_URL" in message
+        # The error names the variable, never its value.
+        assert value not in message
+
+
+def test_an_https_amd_base_url_override_is_accepted(base_env):
+    cfg = load_config({**base_env, "AMD_BASE_URL": "https://alt.advancedmd.com/x.aspx"})
+    assert cfg.amd_base_url.startswith("https://")
