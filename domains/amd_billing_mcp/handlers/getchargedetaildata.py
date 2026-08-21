@@ -26,9 +26,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from amd_mcp_common.errors import safe_amd_call
 
 from ._common import (
+    safe_amd_call_async,
     extract_rows_by_tag,
     get_client,
     raw_to_dict,
@@ -72,7 +72,7 @@ async def handle(*, charge_id: str) -> dict[str, Any]:
             "details": {"reason": "charge_id required"},
         }
     client = get_client()
-    raw_dict, err = safe_amd_call(
+    raw_dict, err = await safe_amd_call_async(
         client, action=ACTION, raw_to_dict_fn=raw_to_dict,
         class_="demographics", chargeid=charge_id,
     )

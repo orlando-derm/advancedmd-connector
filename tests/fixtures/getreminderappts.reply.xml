@@ -1,0 +1,17 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" remindercount="2">
+    <reminderlist>
+      <reminder id="700001" starttime="6/1/2026 9:00 AM" remindertype="CONFIRM"
+                providerid="P1" provider="TESTPROVIDER ONE" patientid="900001">
+        <first_name>TESTPATIENT</first_name>
+        <phone_cell>000-000-0000</phone_cell>
+      </reminder>
+      <reminder id="700002" starttime="6/1/2026 10:30 AM" remindertype="RECALL"
+                providerid="P2" provider="TESTPROVIDER TWO" patientid="900002">
+        <first_name>TESTPATIENT</first_name>
+        <phone_cell>000-000-0000</phone_cell>
+      </reminder>
+    </reminderlist>
+  </Results>
+</PPMDResults>

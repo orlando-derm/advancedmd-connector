@@ -22,9 +22,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from amd_mcp_common.errors import safe_amd_call
 
-from ._common import get_client, raw_to_dict, summarize_by
+from ._common import get_client, raw_to_dict, safe_amd_call_async, summarize_by
 
 
 ACTION = "getupdatedvisits"
@@ -112,7 +111,7 @@ async def handle(*, since: str, limit: int = 100) -> dict[str, Any]:
     if not since:
         return {"error": "bad_input", "details": {"reason": "since required"}}
     client = get_client()
-    raw_dict, err = safe_amd_call(
+    raw_dict, err = await safe_amd_call_async(
         client, action=ACTION, raw_to_dict_fn=raw_to_dict,
         class_="api", since=since, limit=str(limit),
     )

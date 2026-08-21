@@ -23,9 +23,8 @@ from typing import Any
 
 from lxml import etree
 
-from amd_mcp_common.errors import safe_amd_call
 
-from ._common import get_client, raw_to_dict, summarize_by
+from ._common import get_client, raw_to_dict, safe_amd_call_async, summarize_by
 
 
 ACTION = "getdatevisits"
@@ -159,7 +158,7 @@ async def handle(*, date: str) -> dict[str, Any]:
             "error": "bad_input",
             "details": {"reason": f"date must be YYYY-MM-DD or M/D/YYYY: {exc}"},
         }
-    raw_dict, err = safe_amd_call(
+    raw_dict, err = await safe_amd_call_async(
         client, action=ACTION, raw_to_dict_fn=raw_to_dict,
         class_="api", visitdate=amd_date,
         children=_template_children(),

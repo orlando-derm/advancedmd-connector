@@ -186,3 +186,41 @@ The repo ships a Claude Code plugin (plugin/.claude-plugin/plugin.json +
 Cursor/Desktop config. Tool names, schemas, and redacted shapes are
 identical across remote, local, and today's amd-mcp.
 See SPEC.md for the full contract.
+
+## D18. Integration decisions (P2)
+Recorded here because each one resolves a seam or a conflict that no
+single lane owned.
+
+- Startup entry point. `connector.lifecycle.wire_real_deps(config)` is
+  the only place a real singleton is named; `connector.app.build_app()`
+  is the production ASGI factory and the container runs
+  `uvicorn --factory connector.app:build_app`. Importing connector.app
+  therefore reads no environment and opens no file.
+- MCP session idle timeout is configuration, not a constant:
+  MCP_SESSION_IDLE_S (SPEC 15, default 3600) joins the SPEC 19 table and
+  is passed to mount_mcp.
+- SPEC 7.6 per-caller pacing is carried on the request, not looked up:
+  ToolRequest gains `caller_limit` (set by the receiver from the token's
+  per_minute) and XmlRequest gains `caller` and `caller_limit`, which the
+  sender hands to clock.acquire. Nothing below the receiver ever resolves
+  a caller.
+- SPEC 5.3 aging versus SPEC 23.5 fairness. Promoting a whole aged batch
+  backlog at once satisfies "batch cannot starve" and breaks "every
+  interactive call starts within one tool's duration": records that
+  arrived together promote together and, being older, sort ahead of every
+  later interactive call. So promotion is bounded twice: at most ONE
+  promoted record is outstanding, and a promoted record is keyed on the
+  moment it was promoted rather than on its original arrived_at.
+  `arrived_at` itself is never rewritten. See
+  connector/queues.py::EntryQueue._promote_aged and
+  tests/load/test_fairness.py.
+- One login at a time. AmdSession.login holds a lock and re-checks under
+  it. Without it the startup login and the first tool call each take a
+  slot from the 1/min login bucket and the loser waits a full minute for
+  a session it was about to be handed.
+- GET /v1/tools and the MCP surface build their row with the same
+  function (connector.mcp_surface.tool_row), so the SPEC 12.4 parity test
+  cannot be satisfied by two copies drifting apart.
+- Metrics are fed from the audit line's own fields
+  (lifecycle._AuditingMetrics): a value the SPEC 17.2 key set forbids in
+  an audit line cannot reach a public /metrics label either.

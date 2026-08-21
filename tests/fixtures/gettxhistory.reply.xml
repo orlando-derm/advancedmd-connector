@@ -1,0 +1,15 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" chargecount="2">
+    <chargelist>
+      <charge id="400001" patientid="900001" proccode="00000" provcode="P1"
+              provname="TESTPROVIDER ONE" faccode="F1" facname="TEST FACILITY"
+              visit="800001" dos="6/1/2026" agingdate="6/1/2026" paymentplan="0"
+              void="0" protected="0" fee="0.00" paid="0.00"/>
+      <charge id="400002" patientid="900001" proccode="00000" provcode="P2"
+              provname="TESTPROVIDER TWO" faccode="F1" facname="TEST FACILITY"
+              visit="800002" dos="6/2/2026" agingdate="6/2/2026" paymentplan="0"
+              void="1" protected="0" fee="0.00" paid="0.00"/>
+    </chargelist>
+  </Results>
+</PPMDResults>

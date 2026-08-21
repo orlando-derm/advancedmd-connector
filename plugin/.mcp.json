@@ -1,0 +1,112 @@
+{
+  "mcpServers": {
+    "amd-patients": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "patients"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-visits": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "visits"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-providers": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "providers"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-codes": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "codes"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-billing": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "billing"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-payments": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "payments"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-masterfiles": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "masterfiles"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-system": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "system"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    },
+    "amd-ehr": {
+      "command": "uvx",
+      "args": [
+        "advancedmd-mcp",
+        "--domain",
+        "ehr"
+      ],
+      "env": {
+        "ADVANCEDMD_CONNECTOR_URL": "${ADVANCEDMD_CONNECTOR_URL}",
+        "ADVANCEDMD_CONNECTOR_TOKEN": "${ADVANCEDMD_CONNECTOR_TOKEN}"
+      }
+    }
+  }
+}

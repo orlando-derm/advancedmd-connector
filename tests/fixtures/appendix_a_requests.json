@@ -1,0 +1,95 @@
+{
+  "_comment": "synthetic fixture - hand-written from reference client XML shapes, contains no real patient data",
+  "_about": [
+    "The SPEC Appendix A request map: for each verified tool, the AMD action,",
+    "the class, and the attribute names the handler must put on <ppmdmsg>.",
+    "Attribute VALUES are not pinned here (they come from the caller's args);",
+    "the NAMES are, because SPEC Appendix C defect 1 was exactly a handler",
+    "sending Python-style names. tests/integration/test_tools_verified.py",
+    "asserts each handler's XmlRequest against this file.",
+    "usercontext, msgtime and nocookie are added by connector/sender.py at",
+    "send time and are deliberately absent here."
+  ],
+  "amd_patients_get_demographic": {
+    "alias": "getdemographic",
+    "action": "getdemographic",
+    "class": "demographics",
+    "attrs": ["patientid"],
+    "children": [],
+    "reply_fixture": "getdemographic.reply.xml"
+  },
+  "amd_patients_get_reminder_appts": {
+    "alias": "getreminderappts",
+    "action": "getreminderappts",
+    "class": "api",
+    "attrs": ["startdate", "enddate", "starttime", "endtime", "apptstatus"],
+    "children": [],
+    "reply_fixture": "getreminderappts.reply.xml"
+  },
+  "amd_visits_get_date_visits": {
+    "alias": "getdatevisits",
+    "action": "getdatevisits",
+    "class": "api",
+    "attrs": ["visitdate"],
+    "children": ["visit", "patient", "insurance"],
+    "reply_fixture": "getdatevisits.reply.xml"
+  },
+  "amd_visits_get_updated_visits": {
+    "alias": "getupdatedvisits",
+    "action": "getupdatedvisits",
+    "class": "api",
+    "attrs": ["since", "limit"],
+    "children": [],
+    "reply_fixture": "getupdatedvisits.reply.xml"
+  },
+  "amd_patients_lookup_patient": {
+    "alias": "lookuppatient",
+    "action": "lookuppatient",
+    "class": "api",
+    "attrs": ["name"],
+    "children": [],
+    "reply_fixture": "lookuppatient.reply.xml"
+  },
+  "amd_patients_uploadfile": {
+    "alias": "uploadfile",
+    "action": "uploadfile",
+    "class": "files",
+    "attrs": [],
+    "children": ["file"],
+    "reply_fixture": "uploadfile.reply.xml"
+  },
+  "amd_ehr_getehrnotes": {
+    "alias": "getehrnotes",
+    "action": "getehrnotes",
+    "class": "api",
+    "attrs": ["patientid", "createdfrom", "createdto", "notedatefrom", "notedateto"],
+    "children": ["patientnote", "page", "field"],
+    "reply_fixture": "getehrnotes.reply.xml"
+  },
+  "amd_payments_get_tx_history": {
+    "alias": "gettxhistory",
+    "action": "gettxhistory",
+    "class": "demographics",
+    "attrs": [
+      "patientid",
+      "pagenumber",
+      "filterhistory",
+      "typefilter",
+      "sortbypayment",
+      "groupbyvisit",
+      "sortdescending",
+      "profileid",
+      "getmemo"
+    ],
+    "children": [],
+    "reply_fixture": "gettxhistory.reply.xml"
+  },
+  "amd_billing_get_charge_detail_data": {
+    "alias": "getchargedetaildata",
+    "action": "getchargedetaildata",
+    "class": "demographics",
+    "attrs": ["chargeid"],
+    "children": [],
+    "reply_fixture": "getchargedetaildata.reply.xml"
+  }
+}

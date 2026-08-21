@@ -58,8 +58,11 @@ class FakeClock:
         self.acquired: list[int | str] = []
         self.peak = False
         self.flushed = 0
+        self.caller_acquired: list[tuple[str | None, int | None]] = []
         self.limits: dict[str, dict[str, int]] = {
-            "1": {"used": 0, "limit": 0},
+            # Tier 1 at peak has cap 1/min; RateClock.limit floors the
+            # margin at 1 so the tier is slow, not unsendable.
+            "1": {"used": 0, "limit": 1},
             "2": {"used": 0, "limit": 10},
             "3": {"used": 0, "limit": 21},
             "login": {"used": 0, "limit": 1},
@@ -80,8 +83,16 @@ class FakeClock:
         return self.advance(milliseconds / 1000.0)
 
     # RateClock protocol
-    async def acquire(self, tier: int | str) -> None:
+    async def acquire(
+        self,
+        tier: int | str,
+        *,
+        caller: str | None = None,
+        caller_limit: int | None = None,
+    ) -> None:
         self.acquired.append(tier)
+        #: SPEC 7.6: what the sender charged the per-caller bucket with.
+        self.caller_acquired.append((caller, caller_limit))
         key = str(tier)
         if key in self.limits:
             self.limits[key]["used"] += 1

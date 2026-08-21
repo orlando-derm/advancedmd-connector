@@ -1,0 +1,11 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" patientcount="2">
+    <patientlist>
+      <patient id="900001" chart="TEST900001" first_name="TESTPATIENT"
+               last_name="ALPHA" dob="1/1/1900"/>
+      <patient id="900002" chart="TEST900002" first_name="TESTPATIENT"
+               last_name="BETA" dob="1/1/1900"/>
+    </patientlist>
+  </Results>
+</PPMDResults>

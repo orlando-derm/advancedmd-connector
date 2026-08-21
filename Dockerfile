@@ -37,4 +37,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8820/health \
       | grep -Eq '"status"[[:space:]]*:[[:space:]]*"(ok|degraded|starting)"'
 
-CMD ["uvicorn", "connector.app:app", "--host", "0.0.0.0", "--port", "8820"]
+CMD ["uvicorn", "--factory", "connector.app:build_app", "--host", "0.0.0.0", "--port", "8820"]

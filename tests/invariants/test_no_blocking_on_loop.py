@@ -1,18 +1,24 @@
 """SPEC 4.4 / 23.6: nothing blocks the event loop.
 
-A slow AdvancedMD reply MUST NOT delay /health. The real assertion needs
-the FastAPI app and the sender loop, which P2 wires; until then the test
-is xfail with a reason, and P2 removes the marker rather than rewriting
-the test.
+Two halves, both live.
 
-The static half below is live now: it fails today if anyone puts a
-`time.sleep` or a blocking `requests`-style post into connector/ or into
-a copied handler.
+The static half fails if anyone puts a `time.sleep` or a blocking
+`requests`-style post into connector/ or into a copied handler.
+
+The end-to-end half builds the real object graph through
+lifecycle.wire_real_deps(), parks an AdvancedMD reply inside the real
+sender loop, and asserts GET /health keeps answering in milliseconds.
+AdvancedMD is an httpx.MockTransport: no network call is made and no
+credential is real.
 """
 from __future__ import annotations
 
 import ast
+import asyncio
+import json
+import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -82,20 +88,167 @@ def test_no_blocking_sleep_inside_async_code(path: Path):
                 )
 
 
-@pytest.mark.xfail(
-    reason="P2 wires connector/app.py and the sender loop; this becomes a real "
-           "end-to-end assertion then and the marker is removed.",
-    strict=False,
+# ----------------------------------------------------- the live assertion
+#
+# Everything below builds the REAL wiring -- wire_real_deps(), the real
+# sender loop, the real worker loop, the real RateClock -- and parks an
+# AMD reply on an asyncio.Event that the test controls. AdvancedMD is an
+# httpx.MockTransport: nothing leaves the process and no credential is
+# real. The reply bodies are synthetic fixtures - hand-written from
+# reference client XML shapes, contain no real patient data.
+
+
+SYNTHETIC_FIXTURE_NOTE = (
+    "synthetic fixture - hand-written from reference client XML shapes, "
+    "contains no real patient data"
 )
-def test_slow_amd_reply_does_not_delay_health():
-    """SPEC 4.4: with an AMD reply parked for seconds, GET /health still
-    answers promptly.
 
-    Shape of the eventual test, so P2 fills it in rather than inventing
-    one: start the app with a sender whose send() awaits an event that the
-    test never sets, submit a tool call, then poll GET /health and assert
-    it returns in well under the AMD post timeout.
+LOGIN_REPLY = (
+    f"<!-- {SYNTHETIC_FIXTURE_NOTE} -->"
+    '<PPMDResults><Results success="1">'
+    '<usercontext>synthetic-usercontext-token</usercontext>'
+    "</Results></PPMDResults>"
+).encode("utf-8")
+
+DEMOGRAPHIC_REPLY = (
+    f"<!-- {SYNTHETIC_FIXTURE_NOTE} -->"
+    '<PPMDResults><Results success="1">'
+    '<demographic id="900001" chart="TEST900001">'
+    '<name>TESTPATIENT ALPHA</name>'
+    "</demographic>"
+    "</Results></PPMDResults>"
+).encode("utf-8")
+
+
+def _write_env(tmp_path) -> "tuple[Any, str]":
+    """A real Config plus a real token table, both in a temp directory.
+
+    The credentials are obvious placeholders. Nothing here is a secret and
+    nothing here reaches AdvancedMD.
     """
-    from connector import app  # noqa: F401  (does not exist until P2)
+    from connector.config import load_config
+    from connector.interfaces import Caller
+    from connector.queues import PRIORITY_INTERACTIVE
+    from connector.tokens import TokenTable
 
-    raise AssertionError("P2 implements this")
+    tokens_path = tmp_path / "tokens.json"
+    table = TokenTable.open(tokens_path, create=True)
+    plaintext = table.add(
+        Caller(
+            name="invariant-test",
+            priority=PRIORITY_INTERACTIVE,
+            phi=True,
+            tools="*",
+            max_queue=100,
+        )
+    )
+
+    clock_path = tmp_path / "clock.json"
+    # An empty but VALID state file: SPEC 7.5's conservative cold start is
+    # for an unreadable file, and this test is not about that path.
+    clock_path.write_text(json.dumps({"version": 1, "buckets": {}}), encoding="utf-8")
+
+    config = load_config(
+        {
+            "AMD_USERNAME": "PLACEHOLDER_USERNAME",
+            "AMD_PASSWORD": "PLACEHOLDER_PASSWORD",
+            "AMD_OFFICE_KEY": "000000",
+            "CONNECTOR_TOKENS_PATH": str(tokens_path),
+            "CLOCK_STATE_PATH": str(clock_path),
+            "AMD_POST_TIMEOUT_S": "30",
+        }
+    )
+    return config, plaintext
+
+
+def _mock_amd(gate: "asyncio.Event") -> "Any":
+    """AdvancedMD as an httpx.MockTransport. Login is instant; every tool
+    call parks on `gate` until the test releases it."""
+    import httpx
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        body = request.content
+        if b'action="login"' in body:
+            return httpx.Response(200, content=LOGIN_REPLY)
+        await gate.wait()
+        return httpx.Response(200, content=DEMOGRAPHIC_REPLY)
+
+    return httpx.MockTransport(handler)
+
+
+@pytest.mark.asyncio
+async def test_slow_amd_reply_does_not_delay_health(tmp_path):
+    """SPEC 4.4: with an AMD reply parked, GET /health still answers.
+
+    A blocking post -- requests, a sync httpx call, a time.sleep anywhere
+    on the path -- would park the loop and every /health below would wait
+    the full AMD timeout instead of answering in milliseconds.
+    """
+    import httpx
+
+    from connector.app import create_app
+    from connector.lifecycle import Lifecycle, wire_real_deps
+    from connector import sender as sender_module
+
+    config, token = _write_env(tmp_path)
+    gate = asyncio.Event()
+    transport = _mock_amd(gate)
+
+    deps = wire_real_deps(config)
+    try:
+        # The one injection this test makes: AdvancedMD is a mock
+        # transport. Everything else is the production object graph.
+        await deps.sender.http.aclose()
+        await deps.session.http.aclose()
+        deps.sender.http = httpx.AsyncClient(transport=transport)
+        deps.session.http = httpx.AsyncClient(transport=transport)
+
+        life = Lifecycle(deps)
+        app = create_app(deps, lifecycle=life)
+        await life.startup()
+
+        client = httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://connector.test"
+        )
+        try:
+            # A tool call that will park inside the AMD post.
+            call = asyncio.ensure_future(
+                client.post(
+                    "/v1/tools",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={"tool": "getdemographic", "args": {"patient_id": "900001"}},
+                )
+            )
+            # Let the record reach the sender and the post start.
+            deadline = time.monotonic() + 5.0
+            while not deps.sender.in_flight and time.monotonic() < deadline:
+                await asyncio.sleep(0.005)
+            assert deps.sender.in_flight, "the AMD post never started"
+
+            # While AMD is parked, /health must keep answering promptly.
+            for _ in range(20):
+                started = time.monotonic()
+                health = await client.get("/health")
+                elapsed = time.monotonic() - started
+                assert health.status_code == 200
+                assert elapsed < 0.25, (
+                    f"/health took {elapsed:.3f}s while an AMD post was "
+                    "parked; something is blocking the event loop (SPEC 4.4)"
+                )
+            assert deps.sender.in_flight, "AMD answered early; nothing was parked"
+
+            # Release AMD and let the call complete normally.
+            gate.set()
+            response = await asyncio.wait_for(call, timeout=10)
+            assert response.status_code == 200
+            assert response.json()["ok"] is True
+        finally:
+            gate.set()
+            if not call.done():
+                call.cancel()
+            await client.aclose()
+            await life.shutdown()
+    finally:
+        sender_module.install(None, None)
+        await deps.sender.http.aclose()
+        await deps.session.http.aclose()

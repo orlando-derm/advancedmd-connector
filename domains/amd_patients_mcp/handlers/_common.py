@@ -113,3 +113,46 @@ def extract_rows_by_tag(raw_dict: Any, tag: str) -> list[dict]:
 
     _walk(raw_dict)
     return out
+
+
+# --------------------------------------------------------------------
+# Async bridge to the connector's client shim (SPEC 4.4, Amendment D-2).
+#
+# amd_mcp_common.errors.safe_amd_call is synchronous: it was written for
+# the vendored blocking AMDClient. In the connector the client is
+# connector/client_shim.py, whose call() is a coroutine that awaits
+# send(). Calling the sync helper here would hand the handler an
+# un-awaited coroutine instead of a reply tree.
+#
+# This is the same function with one difference: it awaits an awaitable
+# result. Fault translation is unchanged (it reuses translate_amd_error),
+# so handler result shapes are identical. Connector errors pass straight
+# through -- the worker maps them (SPEC 5.4), and swallowing one into an
+# {"error": ...} envelope would hide a refusal behind a 200.
+# --------------------------------------------------------------------
+
+
+async def safe_amd_call_async(client, *, action: str, raw_to_dict_fn, **kwargs):
+    """Await ``client.call(...)`` and inspect the result for AMD faults.
+
+    Returns the same ``(raw_dict_or_None, error_envelope_or_None)``
+    2-tuple as ``amd_mcp_common.errors.safe_amd_call``.
+    """
+    import inspect as _inspect
+
+    from amd_mcp_common.errors import translate_amd_error
+    from connector.errors import ConnectorError
+
+    try:
+        raw = client.call(action=action, **kwargs)
+        if _inspect.isawaitable(raw):
+            raw = await raw
+    except ConnectorError:
+        raise
+    except BaseException as exc:  # noqa: BLE001 - surface the envelope
+        return None, translate_amd_error(exc)
+    raw_dict = raw_to_dict_fn(raw)
+    envelope = translate_amd_error(raw_dict)
+    if envelope.get("error") and envelope["error"] != "ok":
+        return raw_dict, envelope
+    return raw_dict, None

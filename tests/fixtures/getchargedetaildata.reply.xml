@@ -1,0 +1,14 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1">
+    <chargelist>
+      <charge id="400001" createtime="6/1/2026 9:30 AM" begindate="6/1/2026" enddate="6/1/2026"
+              proccode="00000" diagcodes="Z00.00" modcodes="" batchnumber="0"
+              finclasscode="TESTFC" billins="1" insbilled="0" void="0" protected="0"
+              paymentplan="0" voideddate="">
+        <proccodelist><proccode code="00000"/></proccodelist>
+        <diagcodelist><diagcode code="Z00.00"/></diagcodelist>
+      </charge>
+    </chargelist>
+  </Results>
+</PPMDResults>

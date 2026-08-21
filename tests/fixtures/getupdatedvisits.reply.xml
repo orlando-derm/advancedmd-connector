@@ -1,0 +1,17 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" visitcount="2">
+    <visitlist>
+      <visit id="800001" starttime="9:00 AM" lastupdated="6/1/2026 8:00 AM" duration="15"
+             apptstatus="2" providerid="P1" provider="TESTPROVIDER ONE" facilityid="F1"
+             facility="TEST FACILITY" profile="TEST PROFILE" profileid="PR1" reason="">
+        <patient id="900001" name="TESTPATIENT ALPHA" chart="TEST900001"/>
+      </visit>
+      <visit id="800003" starttime="1:00 PM" lastupdated="6/2/2026 7:30 AM" duration="15"
+             apptstatus="5" providerid="P1" provider="TESTPROVIDER ONE" facilityid="F1"
+             facility="TEST FACILITY" profile="TEST PROFILE" profileid="PR1" reason="">
+        <patient id="900003" name="TESTPATIENT GAMMA" chart="TEST900003"/>
+      </visit>
+    </visitlist>
+  </Results>
+</PPMDResults>

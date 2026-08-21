@@ -1,0 +1,16 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1">
+    <demographic>
+      <patient id="900001" chart="TEST900001" name="TESTPATIENT ALPHA"
+               firstname="TESTPATIENT" lastname="ALPHA" dob="1/1/1900"
+               sex="U" hometel="000-000-0000" email="testpatient.alpha@example.invalid">
+        <address addr1="1 SYNTHETIC WAY" city="TESTVILLE" state="ZZ" zip="00000"/>
+        <insurancelist>
+          <insurance carcode="TESTCAR1" carname="TEST CARRIER ONE" policy="SYN000001"/>
+        </insurancelist>
+        <filelist/>
+      </patient>
+    </demographic>
+  </Results>
+</PPMDResults>

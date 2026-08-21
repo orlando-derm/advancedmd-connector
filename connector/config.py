@@ -32,6 +32,7 @@ DEFAULTS: dict[str, str] = {
     "SHUTDOWN_DRAIN_S": "30",
     "LOG_LEVEL": "INFO",
     "WRITE_TOOLS_ENABLED": "false",
+    "MCP_SESSION_IDLE_S": "3600",
 }
 
 REQUIRED: tuple[str, ...] = (
@@ -76,6 +77,8 @@ class Config:
     shutdown_drain_s: int = 30
     log_level: str = "INFO"
     write_tools_enabled: bool = False
+    #: SPEC 15: an MCP session is dropped after this long idle.
+    mcp_session_idle_s: int = 3600
 
     def redacted(self) -> dict[str, object]:
         """A log-safe view. Secrets are replaced, never shortened."""
@@ -98,6 +101,7 @@ class Config:
             "shutdown_drain_s": self.shutdown_drain_s,
             "log_level": self.log_level,
             "write_tools_enabled": self.write_tools_enabled,
+            "mcp_session_idle_s": self.mcp_session_idle_s,
         }
 
 
@@ -163,6 +167,7 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         shutdown_drain_s=_as_int(env, "SHUTDOWN_DRAIN_S"),
         log_level=_get(env, "LOG_LEVEL").strip().upper() or "INFO",
         write_tools_enabled=_as_bool(env, "WRITE_TOOLS_ENABLED"),
+        mcp_session_idle_s=_as_int(env, "MCP_SESSION_IDLE_S"),
     )
     _validate(cfg)
     return cfg
@@ -180,6 +185,7 @@ def _validate(cfg: Config) -> None:
         ("LOGIN_CHECK_CACHE_S", cfg.login_check_cache_s),
         ("ENTRY_QUEUE_CAP", cfg.entry_queue_cap),
         ("SHUTDOWN_DRAIN_S", cfg.shutdown_drain_s),
+        ("MCP_SESSION_IDLE_S", cfg.mcp_session_idle_s),
     ):
         if value < 0:
             raise ConfigError(f"{name} must not be negative")

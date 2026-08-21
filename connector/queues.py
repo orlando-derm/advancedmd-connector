@@ -66,6 +66,13 @@ class ToolRequest:
     id: str = field(default_factory=_new_id)
     abandoned: bool = False
     slot: asyncio.Future = field(default=None)  # type: ignore[assignment]
+    #: SPEC 11.1 meta, filled by the worker just before the slot is set.
+    #: Counts and flags only -- never args, never results (SPEC 17.2).
+    meta: dict[str, Any] = field(default_factory=dict)
+    #: SPEC 7.6: the caller's per-minute cap, copied off the Caller by the
+    #: receiver so the sender can charge a per-caller bucket without ever
+    #: looking a caller up.
+    caller_limit: int | None = None
 
     def __post_init__(self) -> None:
         if self.slot is None:
@@ -103,6 +110,10 @@ class XmlRequest:
     attrs: dict[str, str] = field(default_factory=dict)
     children: list[Any] = field(default_factory=list)
     tier: int | str = 3
+    #: SPEC 7.6: the caller this AMD request is being made on behalf of,
+    #: and its per-minute cap. A name and an integer only.
+    caller: str | None = None
+    caller_limit: int | None = None
     id: str = field(default_factory=_new_id)
     #: SPEC 6.4 / 8.4: at most one re-login per AMD request.
     retried_after_relogin: bool = False
@@ -145,6 +156,9 @@ class EntryQueue:
         self._batch: list[tuple[float, int, ToolRequest]] = []
         self._seq = itertools.count()
         self._per_caller: dict[str, int] = {}
+        #: True while an aged batch record sits promoted and unserved. See
+        #: _promote_aged for why only one may be outstanding.
+        self._promoted_waiting = False
         self._arrived = asyncio.Event()
 
     # -- capacity -------------------------------------------------------
@@ -187,12 +201,40 @@ class EntryQueue:
         self._arrived.set()
 
     def _promote_aged(self, now: float) -> None:
-        while self._batch:
-            arrived, seq, record = self._batch[0]
-            if (now - arrived) * 1000.0 <= self.batch_aging_ms:
-                return
-            heapq.heappop(self._batch)
-            heapq.heappush(self._interactive, (arrived, seq, record))
+        """Promote the oldest aged batch record -- ONE at a time.
+
+        SPEC 5.3 promotes a batch record that has waited longer than
+        BATCH_AGING_MS "so batch cannot starve". SPEC 23.5 requires, under
+        exactly the backlog that triggers promotion, that every
+        interactive call still starts within about one tool's duration.
+        Promoting the whole aged backlog at once satisfies the first and
+        breaks the second: 200 batch records that arrived together all
+        promote in the same instant and, being older, sort ahead of every
+        later interactive call, which then waits for the entire backlog.
+
+        So promotion is bounded twice over:
+
+          * at most ONE promoted batch record is outstanding at a time;
+          * a promoted record joins the interactive lane keyed on the
+            moment it was promoted, not on its original arrived_at, so it
+            queues behind the interactive work already waiting rather than
+            in front of it.
+
+        The head of the batch lane still always makes progress, which is
+        what "cannot starve" asks for, and an interactive record waits
+        behind at most one promoted record plus the tool already running,
+        which is what SPEC 23.5 asks for. `arrived_at` itself is never
+        rewritten: aging, max_wait_ms and the audit line all still measure
+        from the real arrival.
+        """
+        if self._promoted_waiting or not self._batch:
+            return
+        arrived, seq, record = self._batch[0]
+        if (now - arrived) * 1000.0 <= self.batch_aging_ms:
+            return
+        heapq.heappop(self._batch)
+        heapq.heappush(self._interactive, (now, seq, record))
+        self._promoted_waiting = True
 
     def get_nowait(self) -> ToolRequest | None:
         """Pop the next record in SPEC 5.3 order, or None if empty."""
@@ -202,6 +244,8 @@ class EntryQueue:
         if not heap:
             return None
         _, _, record = heapq.heappop(heap)
+        if record.priority != PRIORITY_INTERACTIVE and heap is self._interactive:
+            self._promoted_waiting = False
         remaining = self._per_caller.get(record.caller, 1) - 1
         if remaining > 0:
             self._per_caller[record.caller] = remaining

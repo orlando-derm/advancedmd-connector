@@ -17,9 +17,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from amd_mcp_common.errors import safe_amd_call
 
-from ._common import extract_rows_by_tag, get_client, raw_to_dict
+from ._common import extract_rows_by_tag, get_client, raw_to_dict, safe_amd_call_async
 
 
 ACTION = "lookup-patient"  # catalog key (Adam-facing); wire action below
@@ -95,7 +94,7 @@ async def handle(*, query: str, page: int = 1) -> dict[str, Any]:
     call_kwargs = {"class_": "api", "name": query}
     if page and page > 1:
         call_kwargs["page"] = page
-    raw_dict, err = safe_amd_call(
+    raw_dict, err = await safe_amd_call_async(
         client, action="lookuppatient", raw_to_dict_fn=raw_to_dict,
         **call_kwargs,
     )

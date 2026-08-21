@@ -68,10 +68,16 @@ class AMDClient:
         *,
         record_id: str,
         priority: int = PRIORITY_INTERACTIVE,
+        caller: str | None = None,
+        caller_limit: int | None = None,
     ) -> None:
         self._send = send
         self._record_id = record_id
         self._priority = priority
+        #: SPEC 7.6: carried onto every XmlRequest so the sender can charge
+        #: the per-caller bucket. A caller NAME and an integer, nothing else.
+        self._caller = caller
+        self._caller_limit = caller_limit
         #: AMD actions issued through this client, in order. The worker
         #: reads it for the audit line's amd_actions/amd_calls (SPEC 17.2).
         self.amd_actions: list[str] = []
@@ -105,6 +111,8 @@ class AMDClient:
             priority=self._priority,
             attrs=clean,
             children=list(children or []),
+            caller=self._caller,
+            caller_limit=self._caller_limit,
         )
         self.amd_actions.append(action)
         return await self._send(req)

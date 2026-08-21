@@ -1042,3 +1042,227 @@ STUB / WRITE-GATED — no real AMD call performed. `handle()` unconditionally ra
 - Returns: N/A — always raises `NotImplementedError`, no return value.
 - Client method used: N/A (no client call is made)
 
+
+---
+
+# Verification ledger (SPEC 9.3)
+
+Appended by the connector build. This section is the per-tool record SPEC
+9.3 requires before a tool may be marked verified. Everything above this
+line is the original survey of the copied handlers and is unchanged.
+
+Each entry records the five checklist steps:
+
+1. **Request** - action, class, attribute names, children, and the
+   reference implementation they were transcribed from.
+2. **Live check** - one operator call on black-sky returning
+   `success="1"`, with the date and the AMD call count.
+   **Every entry below is `PENDING OPERATOR`.** No process in this repo
+   may contact AdvancedMD, so this step cannot be and has not been done.
+   `RegistryEntry.verified_at` stays `None` while it is pending.
+3. **Fixture** - a SYNTHETIC fixture under `tests/fixtures/`, hand-written
+   from the reference clients' XML shapes, plus the Appendix B assertion
+   in `tests/integration/test_tools_verified.py`. These are NOT recordings:
+   SPEC 23.3 step 4 governs, and no live recording was made.
+4. **Tier** - the SPEC 7.4 tier. `connector/clock.py` owns the table;
+   `connector/registry.py` consumes it and never re-derives it.
+5. **Defects** - the Appendix C items fixed for this tool.
+
+The request map for all nine tools is also machine-readable in
+`tests/fixtures/appendix_a_requests.json`, which the integration test
+asserts each handler's `XmlRequest` against.
+
+## verification-ledger-getdemographic
+
+- Tool: `amd_patients_get_demographic` (alias `getdemographic`), patients
+- Request: action `getdemographic`, class `demographics`, attr `patientid`.
+  No children. Source: `connector/client_shim.get_patient_bundle`,
+  transcribed from all four backend vendored clients.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getdemographic.reply.xml`
+- Result shape (Appendix B): `{"patient": <serialized reply tree>}` -
+  `serialize()` of the reply element, i.e. the `_tag`/`_attrs`/`_children`
+  dict form rooted at `PPMDResults`.
+- Tier: 2
+- Defects fixed: Appendix C 2 - `chart_number` is no longer forwarded into
+  the `patientid`-only path. It is refused with `{"error": "bad_input"}`
+  before any AMD call. Also fixed here: the handler did not `await` the
+  client, so it returned an un-awaited coroutine under the async shim.
+- Open item: SPEC Appendix A spells the class `demographic`; every
+  reference client and the survey above use `demographics`. The
+  live-verified spelling is used. There is no confirmed AMD attribute for
+  a chart-number lookup in any reference client, so that path stays
+  refused rather than guessed.
+
+## verification-ledger-getreminderappts
+
+- Tool: `amd_patients_get_reminder_appts` (alias `getreminderappts`), patients
+- Request: action `getreminderappts`, class `api`, attrs `startdate`,
+  `enddate`, `starttime` (`12:00 AM`), `endtime` (`11:59 PM`), `apptstatus`
+  (default `0,1,2,3,5,10,11,12`), plus `patientid` when the caller passes
+  `patient_id`. No children. Source: appointment-validator's vendored
+  client; `apptstatus` is required by AMD's server despite the docs.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getreminderappts.reply.xml`
+- Result shape (Appendix B): `{start_date, end_date, count,
+  by_remindertype, by_provider, by_provider_id, appts[]}`; each appt is
+  `{appointment_id, appointment_datetime, remindertype, provider_id,
+  provider_name, patient_id, patient_name, phone_cell}`.
+- Tier: 2
+- Defects fixed: none from Appendix C; the sync-call bridge only.
+
+## verification-ledger-getdatevisits
+
+- Tool: `amd_visits_get_date_visits` (alias `getdatevisits`), visits
+- Request: action `getdatevisits`, class `api`, attr `visitdate`
+  (`M/D/YYYY`), children `<visit columnheading duration color apptstatus>`,
+  `<patient name chart>`, `<insurance carname carcode>`. Source:
+  appointment-validator's vendored client. `providerid`/`provider`/
+  `facilityid`/`facility`/`reason`/`profile`/`profileid` are rejected as
+  requested columns on this action and must NOT be re-added.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getdatevisits.reply.xml`
+- Result shape (Appendix B): `{date, count, by_provider, by_provider_id,
+  by_profile, by_facility, by_facility_id, by_apptstatus, visits[]}`; each
+  visit is `{visit_id, starttime, duration, apptstatus, provider_id,
+  provider_name, facility_id, facility_name, profile, profile_id, reason,
+  patient_id, patient_name, chart_number}`.
+- Tier: 2
+- Defects fixed: none from Appendix C; the sync-call bridge only.
+- Open item: `visits` is sorted on the raw `starttime` STRING, so
+  `"10:30 AM"` sorts before `"9:00 AM"`. That ordering is frozen by
+  Appendix B and is recorded here rather than silently changed.
+
+## verification-ledger-getupdatedvisits
+
+- Tool: `amd_visits_get_updated_visits` (alias `getupdatedvisits`), visits
+- Request: action `getupdatedvisits`, class `api`, attrs `since`, `limit`.
+  No children.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getupdatedvisits.reply.xml`
+- Result shape (Appendix B): `{since, limit, count, by_provider,
+  by_provider_id, by_facility, by_facility_id, by_apptstatus, visits[]}`;
+  visit rows carry the getdatevisits fields plus `lastupdated`, ordered
+  newest-updated first.
+- Tier: **1**
+- Defects fixed: Appendix C 4 - the copied policy file
+  (`knowledge/integrations/amd/visits/getupdatedvisits.policy.data.json`)
+  already carries `tier: 1`, and `connector/registry.default_tier_for`
+  returns 1. The handler's `TIER = 2` constant is ignored per SPEC 7.4; a
+  unit test pins both.
+
+## verification-ledger-lookuppatient
+
+- Tool: `amd_patients_lookup_patient` (alias `lookuppatient`), patients
+- Request: action `lookuppatient` (one word), class `api`, attr `name`
+  (the query), plus `page` when > 1. No children. The catalog/policy key
+  is `lookup-patient`; the WIRE action is `lookuppatient`, and the alias
+  registered here is the wire spelling. The legacy `lookup`/`class=patient`
+  shape fails on this office key.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/lookuppatient.reply.xml`
+- Result shape (Appendix B): `{query, page, count, matches[], narrow_query}`;
+  `count` is the true total, `matches` is capped at 5 and
+  `narrow_query` is True when the cap bit. Each match is
+  `{patient_id, chart_number, first_name, last_name, dob}`.
+- Tier: 3
+- Defects fixed: none from Appendix C; the sync-call bridge only.
+
+## verification-ledger-uploadfile
+
+- Tool: `amd_patients_uploadfile` (alias `uploadfile`), patients. **WRITE.**
+- Request: action `uploadfile`, class `files`, **no attributes on
+  `ppmdmsg`**. One child `<file>` carrying every metadata attribute
+  (`name`, `description`, `filetype`, `fileext`, `visitid`, `profileid`,
+  `facilityid`, `providerid`, `dos`, `comments`, `patientid`,
+  `referringproviderid`, `savechanges="true"`, `zipmode="0"`), a
+  `<grouplist><group id="4" code="MISC" name="Miscellaneous">
+  <categorylist><category id="25" filegroupfid="4" code="MIUNSP"
+  name="Unspecified" .../></categorylist></group></grouplist>`, and a
+  `<filecontents>` child holding the base64 body. Source: patient-intake's
+  vendored client.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/uploadfile.reply.xml`
+- Result shape (Appendix B): `{patient_id, file_name, uploaded,
+  document_ref, decoded_bytes}`. `document_ref` is AMD's opaque id, or the
+  sentinel `"uploaded"` on a success carrying no id.
+- Tier: 2
+- Defects fixed: Appendix C 5 - the `NotImplementedError` stub is replaced
+  by the reference implementation, including the 1024 KB DECODED cap
+  (SPEC 15), checked client-side before the request is built.
+- Gating: three keys must turn - `WRITE_TOOLS_ENABLED` (SPEC 9.1),
+  `may_write` carrying this tool on the caller's token (SPEC 10.3), and
+  the tool being verified (SPEC 9.2). All three are enforced in
+  `connector/worker.py` and tested.
+
+## verification-ledger-getehrnotes
+
+- Tool: `amd_ehr_getehrnotes` (alias `getehrnotes`), ehr
+- Request: action `getehrnotes`, class `api`, attrs `patientid`,
+  `createdfrom`, `createdto`, `notedatefrom`, `notedateto` (all
+  `M/D/YYYY`), children `<patientnote templatename notedatetime username
+  signedbyuser>`, `<page pagename>`, `<field fieldname value>`. Source:
+  note-audit's vendored client (`fetch_note_raw`).
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getehrnotes.reply.xml`
+- Result shape (Appendix B): `{patient_id, count}`. Count only - no note
+  text and no raw blob leaves the handler.
+- Tier: 2
+- Defects fixed: Appendix C 1, for this tool only (Amendment D-3). The
+  handler previously sent no `class_` and the Python-style attribute
+  `patient_id`, so it raised `TypeError` before any XML was built.
+- Open item: note-audit also sends a practice-specific `templateid`
+  filter. A practice constant does not belong in a shared tool, so it is
+  omitted here. Whether AMD accepts the unfiltered form is exactly what
+  the operator's live check has to establish.
+
+## verification-ledger-gettxhistory
+
+- Tool: `amd_payments_get_tx_history` (alias `gettxhistory`), payments
+- Request: action `gettxhistory`, class `demographics`, attrs `patientid`,
+  `pagenumber`, `filterhistory`, `typefilter`, `sortbypayment`,
+  `groupbyvisit`, `sortdescending`, `profileid`, `getmemo`, plus
+  `fromdate`/`todate` when supplied. No children. Class confirmed against
+  note-audit's vendored client (`fetch_charges`).
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/gettxhistory.reply.xml`
+- Result shape (Appendix B): `{patient_id, page, count, by_provcode,
+  by_void, by_paymentplan}`. No amounts and no raw blob: amount fields are
+  policy-redacted, and summing redacted markers would be meaningless.
+- Tier: 2
+- Defects fixed: none from Appendix C; the sync-call bridge only.
+
+## verification-ledger-getchargedetaildata
+
+- Tool: `amd_billing_get_charge_detail_data` (alias `getchargedetaildata`),
+  billing
+- Request: action `getchargedetaildata`, class `demographics`, attr
+  `chargeid`. No children. Confirmed against note-audit's vendored client.
+- Live check: **PENDING OPERATOR**
+- Fixture: `tests/fixtures/getchargedetaildata.reply.xml`
+- Result shape (Appendix B): `{charge_id, count, by_void, by_billins}`.
+- Tier: 2
+- Defects fixed: none from Appendix C; the sync-call bridge only.
+
+## Ledger open items
+
+- **SPEC 9.3 step 2 is PENDING OPERATOR for all nine tools.** Until the
+  operator runs each call on black-sky and records the date and call
+  count here, `verified: true` in this build means "request map, fixture,
+  tier and Appendix C defects are done", not "AdvancedMD has answered it".
+- **Appendix C defect 1 is fixed only where it blocked an Appendix A tool**
+  (Amendment D-3): `getehrnotes` only. Every other handler in ehr,
+  masterfiles, system, providers and codes still calls without `class_`
+  and/or with Python-style attribute names, and stays unverified. Fixing
+  them is per-tool promotion work under SPEC 9.3, one at a time.
+- **Appendix C defect 3** (`getmaster_patient` sending `patient_id`) is
+  fixed to `patientid`, but that tool is not in Appendix A and remains
+  unverified: the fix removes a known defect, it does not promote it.
+- **The synchronous `safe_amd_call` bridge.** The copied handlers call
+  `amd_mcp_common.errors.safe_amd_call`, which was written for a blocking
+  client and would hand back an un-awaited coroutine under
+  `connector/client_shim.py`. Each affected domain's `handlers/_common.py`
+  gained `safe_amd_call_async`, identical except that it awaits the
+  result and lets a `ConnectorError` propagate to the worker instead of
+  swallowing it into an `{"error": ...}` envelope. The copied
+  `safe_amd_call` in `amd_mcp_common` is untouched.

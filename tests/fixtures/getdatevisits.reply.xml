@@ -1,0 +1,19 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" visitcount="2">
+    <visitlist>
+      <visit id="800001" starttime="9:00 AM" duration="15" color="0" apptstatus="2"
+             providerid="P1" provider="TESTPROVIDER ONE" facilityid="F1"
+             facility="TEST FACILITY" columnheading="TEST PROFILE" profileid="PR1" reason="">
+        <patient id="900001" name="TESTPATIENT ALPHA" chart="TEST900001"/>
+        <insurance carname="TEST CARRIER ONE" carcode="TESTCAR1"/>
+      </visit>
+      <visit id="800002" starttime="10:30 AM" duration="30" color="0" apptstatus="1"
+             providerid="P2" provider="TESTPROVIDER TWO" facilityid="F1"
+             facility="TEST FACILITY" columnheading="TEST PROFILE" profileid="PR1" reason="">
+        <patient id="900002" name="TESTPATIENT BETA" chart="TEST900002"/>
+        <insurance carname="TEST CARRIER TWO" carcode="TESTCAR2"/>
+      </visit>
+    </visitlist>
+  </Results>
+</PPMDResults>

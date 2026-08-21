@@ -3,9 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from amd_mcp_common.errors import safe_amd_call
-
-from ._common import get_client, raw_to_dict
+from ._common import get_client, raw_to_dict, safe_amd_call_async
 
 
 ACTION = "getmaster-patient"
@@ -18,9 +16,12 @@ async def handle(*, patient_id: str) -> dict[str, Any]:
     if not patient_id:
         return {"error": "bad_input", "details": {"reason": "patient_id required"}}
     client = get_client()
-    raw_dict, err = safe_amd_call(
+    # SPEC Appendix C defect 3: the wire attribute is `patientid`. The
+    # Python-style `patient_id` spelling was rejected by AMD before this
+    # handler could return anything.
+    raw_dict, err = await safe_amd_call_async(
         client, action="getmaster", raw_to_dict_fn=raw_to_dict,
-        class_="patient", patient_id=patient_id,
+        class_="patient", patientid=patient_id,
     )
     if err is not None:
         return {"patient_id": patient_id, **err}

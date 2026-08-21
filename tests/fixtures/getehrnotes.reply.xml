@@ -1,0 +1,19 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1" patientnotecount="2">
+    <patientnotelist>
+      <patientnote id="500001" templatename="TEST TEMPLATE" notedatetime="6/1/2026 9:15 AM"
+                   username="TESTUSER" signedbyuser="TESTUSER">
+        <page pagename="TEST PAGE">
+          <field fieldname="TEST FIELD" value="SYNTHETIC VALUE"/>
+        </page>
+      </patientnote>
+      <patientnote id="500002" templatename="TEST TEMPLATE" notedatetime="6/2/2026 11:00 AM"
+                   username="TESTUSER" signedbyuser="">
+        <page pagename="TEST PAGE">
+          <field fieldname="TEST FIELD" value="SYNTHETIC VALUE"/>
+        </page>
+      </patientnote>
+    </patientnotelist>
+  </Results>
+</PPMDResults>

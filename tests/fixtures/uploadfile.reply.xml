@@ -1,0 +1,6 @@
+<!-- synthetic fixture - hand-written from reference client XML shapes, contains no real patient data -->
+<PPMDResults>
+  <Results success="1">
+    <file id="600001" name="synthetic-document.pdf" filetype="GENERAL" fileext="pdf"/>
+  </Results>
+</PPMDResults>
